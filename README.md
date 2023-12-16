@@ -12,7 +12,10 @@ API MID intermediaria entre el cliente SGA y la API de terceros con los endpoint
 
 ### Variables de Entorno
 ```shell
+INSCRIPCION_SERVICE: [Servicio API INSCRIPCION]
+PROYECTO_SERVICE: ${PROYECTO_SERVICE}
 TERCEROS_SERVICE: [Servicio API TERCEROS]
+UBICACIONES_SERVICE: [Servicio API UBICACIONES]
 ```
 **NOTA:** Las variables se pueden ver en el fichero conf/app.conf.
 
