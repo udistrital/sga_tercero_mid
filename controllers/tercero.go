@@ -3641,3 +3641,41 @@ func (c *TerceroController) GuardarAutor() {
 	}
 	c.ServeJSON()
 }
+
+// ObtenerTerceroConNIT ...
+// @Title ObtenerTerceroConNIT
+// @Description Retorna una lista de terceros con su NIT y nombre
+// @Success 200 {array} Tercero "Lista de terceros con NIT y nombre"
+// @Failure 400 bad request
+// @router /consultar_terceros_con_nit [get]
+func (c *TerceroController) ObtenerTercerosConNIT() {
+	var tercerosConNIT []map[string]interface{}
+	//Consultar terceros con nit
+	errTerceroConNIT := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"datos_identificacion?query=TipoDocumentoId:7", &tercerosConNIT)
+	if errTerceroConNIT == nil{
+		if tercerosConNIT != nil  && len(tercerosConNIT) > 0 {
+			type TerceroConNIT struct {
+				NIT	string `json:"NIT"`
+				NombreCompleto string `json:"NombreCompleto"`
+			}
+			var resultado []TerceroConNIT
+			for _, tercero := range tercerosConNIT {
+				if terceroData, ok := tercero["TerceroId"].(map[string]interface{}); ok {
+					terceroConNIT := TerceroConNIT{
+						NombreCompleto: terceroData["NombreCompleto"].(string),
+						NIT: tercero["Numero"].(string),
+					}
+					resultado = append(resultado, terceroConNIT)
+				}
+			}
+			c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Request successful", "Data": resultado}
+		}
+
+	}else {
+		logs.Error(errTerceroConNIT)
+		c.Data["json"] = map[string]interface{}{"Success": false, "Status": "404", "Message": "Data not found", "Data": nil}
+		c.Data["system"] = errTerceroConNIT
+		c.Abort("404")
+	}
+	c.ServeJSON()
+}
