@@ -1,9 +1,9 @@
 package test
 
 import (
+	_ "github.com/udistrital/sga_mid_tercero/routers"
 	"path/filepath"
 	"runtime"
-	_ "sga_mid_tercero/routers"
 	"testing"
 
 	"github.com/astaxie/beego"

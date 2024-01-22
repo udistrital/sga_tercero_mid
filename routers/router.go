@@ -1,6 +1,6 @@
 // @APIVersion 1.0.0
-// @Title beego Test API
-// @Description beego has a very cool tools to autogenerate documents for your API
+// @Title Microservicio SGA MID - Terceros
+// @Description Microservicio SGA MID del microservicio terceros
 // @Contact astaxie@gmail.com
 // @TermsOfServiceUrl http://beego.me/
 // @License Apache 2.0
@@ -9,12 +9,12 @@ package routers
 
 import (
 	"github.com/astaxie/beego"
-	"sga_mid_tercero/controllers"
+	"github.com/udistrital/sga_mid_tercero/controllers"
 )
 
 func init() {
 	ns := beego.NewNamespace("/v1",
-		beego.NSNamespace("/persona",
+		beego.NSNamespace("/terceros",
 			beego.NSInclude(
 				&controllers.TerceroController{},
 			),

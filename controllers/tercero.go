@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"github.com/astaxie/beego"
 	"github.com/beego/beego/logs"
+	"github.com/udistrital/sga_mid_tercero/models"
 	"github.com/udistrital/utils_oas/formatdata"
 	"github.com/udistrital/utils_oas/request"
 	"github.com/udistrital/utils_oas/time_bogota"
 	"reflect"
-	"sga_mid_tercero/models"
 	"strconv"
 )
 
@@ -43,7 +43,7 @@ func (c *TerceroController) URLMapping() {
 // @Param	body		body 	{}	true		"body for Actualizar datos de persona content"
 // @Success	200	{}
 // @Failure	403	body is empty
-// @router /actualizar_persona [put]
+// @router / [put]
 func (c *TerceroController) ActualizarPersona() {
 	var body map[string]interface{}
 	response := make(map[string]interface{})
@@ -224,7 +224,7 @@ func updateOrCreateInfoComplementaria(tipoInfo string, infoComp map[string]inter
 // @Param	body		body 	{}	true		"body for Guardar Persona content"
 // @Success 201 {int}
 // @Failure 400 the request contains incorrect syntax
-// @router /guardar_persona [post]
+// @router / [post]
 func (c *TerceroController) GuardarPersona() {
 
 	//resultado solicitud de descuento
@@ -475,7 +475,7 @@ func (c *TerceroController) GuardarPersona() {
 // @Param	body		body 	{}	true		"body for Guardar Datos Complementarios Persona content"
 // @Success 201 {int}
 // @Failure 400 the request contains incorrect syntax
-// @router /guardar_complementarios [post]
+// @router /complementarios [post]
 func (c *TerceroController) GuardarDatosComplementarios() {
 
 	var tercero map[string]interface{}     // Body POST
@@ -828,7 +828,7 @@ func (c *TerceroController) GuardarDatosComplementarios() {
 // @Param	body		body 	{}	true		"body for Guardar Datos Complementarios Persona content"
 // @Success 201 {int}
 // @Failure 400 the request contains incorrect syntax
-// @router /guardar_complementarios_par [post]
+// @router /par-academico/complementarios [post]
 func (c *TerceroController) GuardarDatosComplementariosParAcademico() {
 
 	//resultado solicitud de descuento
@@ -982,7 +982,7 @@ func (c *TerceroController) GuardarDatosComplementariosParAcademico() {
 // @Param	body	body 	{}	true		"body for Actualizar los datos complementarios content"
 // @Success 200 {}
 // @Failure 403 body is empty
-// @router /actualizar_complementarios [put]
+// @router /complementarios [put]
 func (c *TerceroController) ActualizarDatosComplementarios() {
 	// alerta que retorna la funcion ConsultaPersona
 	var alerta models.Alert
@@ -1349,7 +1349,7 @@ func (c *TerceroController) ActualizarDatosComplementarios() {
 // @Param	numeroDocumento	path	int 	true	"numero documento del tercero"
 // @Success 200 {}
 // @Failure 404 not found resource
-// @router /existe_persona/:numeroDocumento [get]
+// @router /existe-tercero/:numeroDocumento [get]
 func (c *TerceroController) ConsultarExistenciaPersona() {
 	numero := c.Ctx.Input.Param(":numeroDocumento")
 
@@ -1501,7 +1501,7 @@ func (c *TerceroController) ConsultarExistenciaPersona() {
 // @Param	tercero_id	path	int	true	"Id del tercero"
 // @Success 200 {}
 // @Failure 404 not found resource
-// @router /consultar_persona/:tercero_id [get]
+// @router /:tercero_id [get]
 func (c *TerceroController) ConsultarPersona() {
 	//Id del tercero
 	idStr := c.Ctx.Input.Param(":tercero_id")
@@ -1694,7 +1694,7 @@ func (c *TerceroController) ConsultarPersona() {
 // @Param	body		body 	{}	true		"body for Guardar DatosContacto content"
 // @Success 201 {int}
 // @Failure 400 the request contains incorrect syntax
-// @router /guardar_datos_contacto [post]
+// @router /datos-contacto [post]
 func (c *TerceroController) GuardarDatosContacto() {
 
 	var resultado map[string]interface{}
@@ -1959,7 +1959,7 @@ func (c *TerceroController) GuardarDatosContacto() {
 // @Param	tercero_id	path	int	true	"Id del ente"
 // @Success 200 {}
 // @Failure 404 not found resource
-// @router /consultar_complementarios/:tercero_id [get]
+// @router /:tercero_id/complementarios [get]
 func (c *TerceroController) ConsultarDatosComplementarios() {
 	//Id de la persona
 	idStr := c.Ctx.Input.Param(":tercero_id")
@@ -2272,7 +2272,7 @@ func (c *TerceroController) ConsultarDatosComplementarios() {
 // @Param	tercero_id	path	int	true	"Id del Tercero"
 // @Success 200 {}
 // @Failure 404 not found resource
-// @router /consultar_contacto/:tercero_id [get]
+// @router /:tercero_id/datos-contacto [get]
 func (c *TerceroController) ConsultarDatosContacto() {
 	//Id de la persona
 	idStr := c.Ctx.Input.Param(":tercero_id")
@@ -2515,7 +2515,7 @@ func (c *TerceroController) ConsultarDatosContacto() {
 // @Param	tercero_id	path	int	true	"Id del Tercero"
 // @Success 200 {}
 // @Failure 404 not found resource
-// @router /consultar_familiar/:tercero_id [get]
+// @router /:tercero_id/familiares [get]
 func (c *TerceroController) ConsultarDatosFamiliar() {
 	resultado := make(map[string]interface{})
 	var terceros []map[string]interface{}
@@ -2750,7 +2750,7 @@ func (c *TerceroController) ConsultarDatosFamiliar() {
 // @Param	tercero_id	path	int	true	"Id del Tercero"
 // @Success 200 {}
 // @Failure 404 not found resource
-// @router /consultar_formacion_pregrado/:tercero_id [get]
+// @router /:tercero_id/formacion-pregrado [get]
 func (c *TerceroController) ConsultarDatosFormacionPregrado() {
 	//Id de la persona
 	idStr := c.Ctx.Input.Param(":tercero_id")
@@ -2997,7 +2997,7 @@ func (c *TerceroController) ConsultarDatosFormacionPregrado() {
 // @Param	body	body 	{}	true		"body for Actualizar la info familiar del tercero content"
 // @Success 200 {}
 // @Failure 403 body is empty
-// @router /info_familiar [put]
+// @router /familiares [put]
 func (c *TerceroController) ActualizarInfoFamiliar() {
 	var InfoFamiliar map[string]interface{}
 	var Familiares []map[string]interface{}
@@ -3376,7 +3376,7 @@ func (c *TerceroController) ActualizarInfoFamiliar() {
 // @Param	tercero_id	path	int	true	"Id del tercero"
 // @Success 200 {}
 // @Failure 404 not found resource
-// @router /consultar_info_solicitante/:tercero_id [get]
+// @router /:tercero_id/solicitantes [get]
 func (c *TerceroController) ConsultarInfoEstudiante() {
 	idStr := c.Ctx.Input.Param(":tercero_id")
 	resultado := make(map[string]interface{})
@@ -3571,7 +3571,7 @@ func (c *TerceroController) ConsultarInfoEstudiante() {
 // @Param	body		body 	{}	true		"body for Guardar autor content"
 // @Success 201 {int}
 // @Failure 400 the request contains incorrect syntax
-// @router /guardar_autor [post]
+// @router /autores [post]
 func (c *TerceroController) GuardarAutor() {
 
 	//resultado solicitud de descuento
