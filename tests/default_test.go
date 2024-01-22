@@ -6,6 +6,8 @@ import (
 	"runtime"
 	"testing"
 
+	_ "github.com/udistrital/sga_mid_tercero/routers"
+
 	"github.com/astaxie/beego"
 )
 
