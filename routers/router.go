@@ -10,9 +10,13 @@ package routers
 import (
 	"github.com/astaxie/beego"
 	"github.com/udistrital/sga_mid_tercero/controllers"
+	"github.com/udistrital/utils_oas/errorhandler"
 )
 
 func init() {
+
+	beego.ErrorController(&errorhandler.ErrorHandlerController{})
+
 	ns := beego.NewNamespace("/v1",
 		beego.NSNamespace("/persona",
 			beego.NSInclude(
