@@ -426,6 +426,10 @@
         }
     },
     "definitions": {
+        "TerceroConNIT": {
+            "title": "TerceroConNIT",
+            "type": "object"
+        },
         "{}": {
             "title": "{}",
             "type": "object"
