@@ -6,6 +6,9 @@ import (
 	"reflect"
 	"strconv"
 
+	"net/url"
+	"unicode"
+
 	"github.com/astaxie/beego"
 	"github.com/beego/beego/logs"
 	"github.com/prometheus/common/log"
@@ -15,12 +18,6 @@ import (
 	"github.com/udistrital/utils_oas/request"
 	"github.com/udistrital/utils_oas/requestresponse"
 	"github.com/udistrital/utils_oas/time_bogota"
-	"reflect"
-	"sga_mid_tercero/models"
-	"strconv"
-	"unicode"
-	"net/url"
-
 )
 
 // TerceroController operations for Tercero
@@ -3390,8 +3387,10 @@ func (c *TerceroController) GuardarAutor() {
 // Este label es una combinación del NIT y el nombre, dependiendo del tipo de búsqueda realizada.
 // @Title ObtenerTerceroConNIT
 // @Description Retorna una lista de terceros con su NIT y nombre completo.
-//                La búsqueda puede realizarse por NIT o por nombre completo.
-//                El resultado incluye un label que es una combinación de NIT y nombre, dependiendo del criterio de búsqueda.
+//
+//	La búsqueda puede realizarse por NIT o por nombre completo.
+//	El resultado incluye un label que es una combinación de NIT y nombre, dependiendo del criterio de búsqueda.
+//
 // @Success 200 {array} TerceroConNIT "Lista de terceros con NIT, nombre completo y label correspondiente."
 // @Failure 400 "bad request" en caso de una solicitud incorrecta o problemas en la consulta.
 // @router /consultar_terceros_con_nit [get]
@@ -3414,11 +3413,11 @@ func (c *TerceroController) ObtenerTercerosConNIT() {
 	} else {
 		queryUrl = "datos_identificacion?query=TipoDocumentoId:7&limit=0"
 	}
-	
+
 	var tercerosConNIT []map[string]interface{}
 	//Consultar terceros con nit
-	errTerceroConNIT := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+ queryUrl, &tercerosConNIT)
-	if errTerceroConNIT == nil{
+	errTerceroConNIT := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+queryUrl, &tercerosConNIT)
+	if errTerceroConNIT == nil {
 		if tercerosConNIT != nil && len(tercerosConNIT) > 0 {
 			type TerceroConNIT struct {
 				NIT            string `json:"NIT"`
@@ -3434,7 +3433,7 @@ func (c *TerceroController) ObtenerTercerosConNIT() {
 					} else {
 						label = terceroData["NombreCompleto"].(string) + " - " + tercero["Numero"].(string)
 					}
-		
+
 					terceroConNIT := TerceroConNIT{
 						NombreCompleto: terceroData["NombreCompleto"].(string),
 						NIT:            tercero["Numero"].(string),
@@ -3444,8 +3443,8 @@ func (c *TerceroController) ObtenerTercerosConNIT() {
 				}
 			}
 			c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Request successful", "Data": resultado}
-		}		
-	}else {
+		}
+	} else {
 		logs.Error(errTerceroConNIT)
 		c.Data["json"] = map[string]interface{}{"Success": false, "Status": "404", "Message": "Data not found", "Data": nil}
 		c.Data["system"] = errTerceroConNIT
