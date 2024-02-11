@@ -7,7 +7,7 @@ import (
 
 func init() {
 
-    beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"],
+    beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"],
         beego.ControllerComments{
             Method: "ActualizarDatosComplementarios",
             Router: "/actualizar_complementarios",
@@ -16,7 +16,7 @@ func init() {
             Filters: nil,
             Params: nil})
 
-    beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"],
+    beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"],
         beego.ControllerComments{
             Method: "ActualizarPersona",
             Router: "/actualizar_persona",
@@ -25,7 +25,7 @@ func init() {
             Filters: nil,
             Params: nil})
 
-    beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"],
+    beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"],
         beego.ControllerComments{
             Method: "ConsultarDatosComplementarios",
             Router: "/consultar_complementarios/:tercero_id",
@@ -34,7 +34,7 @@ func init() {
             Filters: nil,
             Params: nil})
 
-    beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"],
+    beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"],
         beego.ControllerComments{
             Method: "ConsultarDatosContacto",
             Router: "/consultar_contacto/:tercero_id",
@@ -43,7 +43,7 @@ func init() {
             Filters: nil,
             Params: nil})
 
-    beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"],
+    beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"],
         beego.ControllerComments{
             Method: "ConsultarDatosFamiliar",
             Router: "/consultar_familiar/:tercero_id",
@@ -52,7 +52,7 @@ func init() {
             Filters: nil,
             Params: nil})
 
-    beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"],
+    beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"],
         beego.ControllerComments{
             Method: "ConsultarDatosFormacionPregrado",
             Router: "/consultar_formacion_pregrado/:tercero_id",
@@ -61,7 +61,7 @@ func init() {
             Filters: nil,
             Params: nil})
 
-    beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"],
+    beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"],
         beego.ControllerComments{
             Method: "ConsultarInfoEstudiante",
             Router: "/consultar_info_solicitante/:tercero_id",
@@ -70,7 +70,7 @@ func init() {
             Filters: nil,
             Params: nil})
 
-    beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"],
+    beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"],
         beego.ControllerComments{
             Method: "ConsultarPersona",
             Router: "/consultar_persona/:tercero_id",
@@ -79,7 +79,7 @@ func init() {
             Filters: nil,
             Params: nil})
 
-    beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"],
+    beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"],
         beego.ControllerComments{
             Method: "ObtenerTercerosConNIT",
             Router: "/consultar_terceros_con_nit",
@@ -88,7 +88,7 @@ func init() {
             Filters: nil,
             Params: nil})
 
-    beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"],
+    beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"],
         beego.ControllerComments{
             Method: "ConsultarExistenciaPersona",
             Router: "/existe_persona/:numeroDocumento",
@@ -97,7 +97,7 @@ func init() {
             Filters: nil,
             Params: nil})
 
-    beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"],
+    beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"],
         beego.ControllerComments{
             Method: "GuardarAutor",
             Router: "/guardar_autor",
@@ -106,7 +106,7 @@ func init() {
             Filters: nil,
             Params: nil})
 
-    beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"],
+    beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"],
         beego.ControllerComments{
             Method: "GuardarDatosComplementarios",
             Router: "/guardar_complementarios",
@@ -115,7 +115,7 @@ func init() {
             Filters: nil,
             Params: nil})
 
-    beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"],
+    beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"],
         beego.ControllerComments{
             Method: "GuardarDatosComplementariosParAcademico",
             Router: "/guardar_complementarios_par",
@@ -124,7 +124,7 @@ func init() {
             Filters: nil,
             Params: nil})
 
-    beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"],
+    beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"],
         beego.ControllerComments{
             Method: "GuardarDatosContacto",
             Router: "/guardar_datos_contacto",
@@ -133,7 +133,7 @@ func init() {
             Filters: nil,
             Params: nil})
 
-    beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"],
+    beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"],
         beego.ControllerComments{
             Method: "GuardarPersona",
             Router: "/guardar_persona",
@@ -142,7 +142,7 @@ func init() {
             Filters: nil,
             Params: nil})
 
-    beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["sga_mid_tercero/controllers:TerceroController"],
+    beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"],
         beego.ControllerComments{
             Method: "ActualizarInfoFamiliar",
             Router: "/info_familiar",
