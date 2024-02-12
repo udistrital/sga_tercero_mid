@@ -176,7 +176,7 @@ func (c *TerceroController) ActualizarPersona() {
 func updateOrCreateInfoComplementaria(tipoInfo string, infoComp map[string]interface{}, idTercero float64) (map[string]interface{}, bool) {
 	resp := map[string]interface{}{}
 	ok := false
-
+	fmt.Println("Llelgó")
 	if infoComp[tipoInfo].(map[string]interface{})["hasId"] != nil {
 		idInfComp := infoComp[tipoInfo].(map[string]interface{})["hasId"].(float64)
 		var updateInfoComp map[string]interface{}
@@ -1295,6 +1295,124 @@ func (c *TerceroController) ActualizarDatosComplementarios() {
 				} else {
 					logs.Error(errGrupoSisbenPost)
 					c.Data["system"] = postNumeroHermanos
+					c.Abort("400")
+				}
+			}
+
+			if persona["EstadoCivil"] != nil {
+				var dataEstado []map[string]interface{}
+				var dataEstadoPut map[string]interface{}
+
+				//Consulta la existencia de el campo para actualizarlo
+				errEstadoData := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId:"+fmt.Sprintf("%.f", idPersona)+",Activo:True,InfoComplementariaId__GrupoInfoComplementariaId__Id:2", &dataEstado)
+				if errEstadoData == nil && dataEstado[0]["Id"] != nil {
+					//Interface para reasignar el Id del estado
+					dataPut := map[string]interface{}{
+						"Id": persona["EstadoCivil"].(map[string]interface{})["Id"].(float64),
+					}
+					//Asignacion a la data de envio
+					dataEstado[0]["InfoComplementariaId"] = dataPut
+					//Actualizacion de la informacion
+					errUpdateEstado := request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero/"+fmt.Sprintf("%.f", dataEstado[0]["Id"]), "PUT", &dataEstadoPut, dataEstado[0])
+					if errUpdateEstado == nil {
+						errores = append(errores, "Estado civil actualizado")
+					} else {
+						logs.Error(errUpdateEstado.Error())
+						c.Data["system"] = errUpdateEstado.Error()
+						c.Abort("400")
+					}
+				} else {
+					logs.Error(errEstadoData.Error())
+					c.Data["system"] = errEstadoData.Error()
+					c.Abort("400")
+				}
+
+			}
+
+			if persona["EstadoCivil"] != nil {
+				var dataEstado []map[string]interface{}
+				var dataEstadoPut map[string]interface{}
+
+				//Consulta la existencia de el campo para actualizarlo
+				errEstadoData := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId:"+fmt.Sprintf("%.f", idPersona)+",Activo:True,InfoComplementariaId__GrupoInfoComplementariaId__Id:2", &dataEstado)
+				if errEstadoData == nil && dataEstado[0]["Id"] != nil {
+					//Interface para reasignar el Id del estado
+					dataPut := map[string]interface{}{
+						"Id": persona["EstadoCivil"].(map[string]interface{})["Id"].(float64),
+					}
+					//Asignacion a la data de envio
+					dataEstado[0]["InfoComplementariaId"] = dataPut
+					//Actualizacion de la informacion
+					errUpdateEstado := request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero/"+fmt.Sprintf("%.f", dataEstado[0]["Id"]), "PUT", &dataEstadoPut, dataEstado[0])
+					if errUpdateEstado == nil {
+						errores = append(errores, "Estado civil actualizado")
+					} else {
+						logs.Error(errUpdateEstado.Error())
+						c.Data["system"] = errUpdateEstado.Error()
+						c.Abort("400")
+					}
+				} else {
+					logs.Error(errEstadoData.Error())
+					c.Data["system"] = errEstadoData.Error()
+					c.Abort("400")
+				}
+
+			}
+
+			if persona["IdentidadGenero"] != nil {
+				var dataIdentidad []map[string]interface{}
+				var dataIdentidadPut map[string]interface{}
+
+				//Consulta la existencia de el campo para actualizarlo
+				errEstadoData := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId:"+fmt.Sprintf("%.f", idPersona)+",Activo:True,InfoComplementariaId__GrupoInfoComplementariaId__Id:1637", &dataIdentidad)
+				if errEstadoData == nil && dataIdentidad[0]["Id"] != nil {
+					//Interface para reasignar el Id de la identidad
+					dataPut := map[string]interface{}{
+						"Id": persona["IdentidadGenero"].(map[string]interface{})["Id"].(float64),
+					}
+					//Asignacion a la data de envio
+					dataIdentidad[0]["InfoComplementariaId"] = dataPut
+					//Actualizacion de la informacion
+					errUpdateEstado := request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero/"+fmt.Sprintf("%.f", dataIdentidad[0]["Id"]), "PUT", &dataIdentidadPut, dataIdentidad[0])
+					if errUpdateEstado == nil {
+						errores = append(errores, "Identidad actualizada")
+					} else {
+						logs.Error(errUpdateEstado.Error())
+						c.Data["system"] = errUpdateEstado.Error()
+						c.Abort("400")
+					}
+				} else {
+					logs.Error(errEstadoData.Error())
+					c.Data["system"] = errEstadoData.Error()
+					c.Abort("400")
+				}
+			}
+
+			if persona["OrientacionSexual"] != nil {
+				var dataOrientacion []map[string]interface{}
+				var dataOrientacionPut map[string]interface{}
+
+				//Consulta la existencia de el campo para actualizarlo
+				errEstadoData := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId:"+fmt.Sprintf("%.f", idPersona)+",Activo:True,InfoComplementariaId__GrupoInfoComplementariaId__Id:1636", &dataOrientacion)
+				if errEstadoData == nil && dataOrientacion[0]["Id"] != nil {
+					//Interface para reasignar el Id de la orientacion
+					dataPut := map[string]interface{}{
+						"Id": persona["OrientacionSexual"].(map[string]interface{})["Id"].(float64),
+					}
+					//Asignacion a la data de envio
+					dataOrientacion[0]["InfoComplementariaId"] = dataPut
+					//Actualizacion de la informacion
+					errUpdateEstado := request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero/"+fmt.Sprintf("%.f", dataOrientacion[0]["Id"]), "PUT", &dataOrientacionPut, dataOrientacion[0])
+					if errUpdateEstado == nil {
+						errores = append(errores, "Orientacion actualizada")
+					} else {
+						logs.Error(errUpdateEstado.Error())
+						c.Data["system"] = errUpdateEstado.Error()
+						c.Abort("400")
+					}
+				} else {
+					logs.Error(errEstadoData.Error())
+					c.Data["system"] = errEstadoData.Error()
 					c.Abort("400")
 				}
 			}
