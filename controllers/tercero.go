@@ -6,18 +6,18 @@ import (
 	"reflect"
 	"strconv"
 
+	"net/url"
+	"unicode"
+
 	"github.com/astaxie/beego"
 	"github.com/beego/beego/logs"
+	"github.com/prometheus/common/log"
 	"github.com/udistrital/sga_mid_tercero/models"
+	"github.com/udistrital/utils_oas/errorhandler"
 	"github.com/udistrital/utils_oas/formatdata"
 	"github.com/udistrital/utils_oas/request"
+	"github.com/udistrital/utils_oas/requestresponse"
 	"github.com/udistrital/utils_oas/time_bogota"
-	"reflect"
-	"sga_mid_tercero/models"
-	"strconv"
-	"unicode"
-	"net/url"
-
 )
 
 // TerceroController operations for Tercero
@@ -50,8 +50,10 @@ func (c *TerceroController) URLMapping() {
 // @Param	body		body 	{}	true		"body for Actualizar datos de persona content"
 // @Success	200	{}
 // @Failure	403	body is empty
-// @router /actualizar_persona [put]
+// @router / [put]
 func (c *TerceroController) ActualizarPersona() {
+	defer errorhandler.HandlePanic(&c.Controller)
+
 	var body map[string]interface{}
 	response := make(map[string]interface{})
 	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &body); err == nil {
@@ -87,14 +89,14 @@ func (c *TerceroController) ActualizarPersona() {
 					if errUpdateTercero == nil {
 						response["tercero"] = updateTerceroAns
 					} else {
-						logs.Error(errUpdateTercero)
-						c.Data["system"] = errUpdateTercero
-						c.Abort("400")
+						logs.Error("Error --> ", errUpdateTercero)
+						c.Ctx.Output.SetStatus(400)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errUpdateTercero.Error())
 					}
 				} else {
-					logs.Error(errtercero)
-					c.Data["system"] = errtercero
-					c.Abort("400")
+					logs.Error("Error --> ", errtercero)
+					c.Ctx.Output.SetStatus(400)
+					c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errtercero.Error())
 				}
 			}
 
@@ -113,14 +115,14 @@ func (c *TerceroController) ActualizarPersona() {
 					if errUpdateIdentificacion == nil {
 						response["identificacion"] = updateIdentificacionAns
 					} else {
-						logs.Error(errUpdateIdentificacion)
-						c.Data["system"] = errUpdateIdentificacion
-						c.Abort("400")
+						logs.Error("Error --> ", errUpdateIdentificacion)
+						c.Ctx.Output.SetStatus(400)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errUpdateIdentificacion.Error())
 					}
 				} else {
-					logs.Error(erridentificacion)
-					c.Data["system"] = erridentificacion
-					c.Abort("400")
+					logs.Error("Error --> ", erridentificacion)
+					c.Ctx.Output.SetStatus(400)
+					c.Data["json"] = requestresponse.APIResponseDTO(false, 400, erridentificacion.Error())
 				}
 			}
 
@@ -174,18 +176,20 @@ func (c *TerceroController) ActualizarPersona() {
 					response["telefono"] = createinfo
 				}
 			}
+			c.Ctx.Output.SetStatus(200)
+			c.Data["json"] = requestresponse.APIResponseDTO(true, 200, response)
 
 		} else {
-			c.Abort("400")
+			c.Ctx.Output.SetStatus(400)
+			c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 		}
 
 	} else {
-		logs.Error(err)
-		c.Data["system"] = err
-		c.Abort("400")
+		logs.Error("Error --> ", err)
+		c.Ctx.Output.SetStatus(400)
+		c.Data["json"] = requestresponse.APIResponseDTO(false, 400, err.Error())
 	}
 
-	c.Data["json"] = response
 	c.ServeJSON()
 }
 
@@ -231,8 +235,9 @@ func updateOrCreateInfoComplementaria(tipoInfo string, infoComp map[string]inter
 // @Param	body		body 	{}	true		"body for Guardar Persona content"
 // @Success 201 {int}
 // @Failure 400 the request contains incorrect syntax
-// @router /guardar_persona [post]
+// @router / [post]
 func (c *TerceroController) GuardarPersona() {
+	defer errorhandler.HandlePanic(&c.Controller)
 
 	//resultado solicitud de descuento
 	var resultado map[string]interface{}
@@ -375,14 +380,15 @@ func (c *TerceroController) GuardarPersona() {
 															//request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"datos_identificacion/%.f", identificacion["Id"]), "DELETE", &resultado2, nil)
 															models.SetInactivo(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"tercero/%.f", terceroPost["Id"]))
 															//request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"tercero/%.f", terceroPost["Id"]), "DELETE", &resultado2, nil)
-															logs.Error(errIdentidadGenero)
-															c.Data["system"] = identidadGenero
-															c.Abort("400")
+															logs.Error("Error --> ", errIdentidadGenero)
+															c.Ctx.Output.SetStatus(400)
+															c.Data["json"] = requestresponse.APIResponseDTO(false, 400, identidadGenero)
+
 														}
 													} else {
-														logs.Error(errIdentidadGenero)
-														c.Data["system"] = identidadGenero
-														c.Abort("400")
+														logs.Error("Error --> ", errIdentidadGenero)
+														c.Ctx.Output.SetStatus(400)
+														c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errIdentidadGenero.Error())
 													}
 
 												} else {
@@ -395,14 +401,14 @@ func (c *TerceroController) GuardarPersona() {
 													//request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"datos_identificacion/%.f", identificacion["Id"]), "DELETE", &resultado2, nil)
 													models.SetInactivo(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"tercero/%.f", terceroPost["Id"]))
 													//request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"tercero/%.f", terceroPost["Id"]), "DELETE", &resultado2, nil)
-													logs.Error(errOrientacionSexual)
-													c.Data["system"] = orientacionSexual
-													c.Abort("400")
+													logs.Error("Error --> ", errOrientacionSexual)
+													c.Ctx.Output.SetStatus(400)
+													c.Data["json"] = requestresponse.APIResponseDTO(false, 400, orientacionSexual)
 												}
 											} else {
-												logs.Error(errOrientacionSexual)
-												c.Data["system"] = orientacionSexual
-												c.Abort("400")
+												logs.Error("Error --> ", errOrientacionSexual)
+												c.Ctx.Output.SetStatus(400)
+												c.Data["json"] = requestresponse.APIResponseDTO(false, 400, orientacionSexual)
 											}
 
 										} else {
@@ -413,14 +419,14 @@ func (c *TerceroController) GuardarPersona() {
 											//request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"datos_identificacion/%.f", identificacion["Id"]), "DELETE", &resultado2, nil)
 											models.SetInactivo(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"tercero/%.f", terceroPost["Id"]))
 											//request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"tercero/%.f", terceroPost["Id"]), "DELETE", &resultado2, nil)
-											logs.Error(errGenero)
-											c.Data["system"] = genero
-											c.Abort("400")
+											logs.Error("Error --> ", errGenero)
+											c.Ctx.Output.SetStatus(400)
+											c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errGenero.Error())
 										}
 									} else {
-										logs.Error(errGenero)
-										c.Data["system"] = genero
-										c.Abort("400")
+										logs.Error("Error --> ", errGenero)
+										c.Ctx.Output.SetStatus(400)
+										c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errGenero.Error())
 									}
 								} else {
 									//Si pasa un error borra todo lo creado al momento del registro del estado civil
@@ -429,49 +435,48 @@ func (c *TerceroController) GuardarPersona() {
 									//request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"datos_identificacion/%.f", identificacion["Id"]), "DELETE", &resultado2, nil)
 									models.SetInactivo(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"tercero/%.f", terceroPost["Id"]))
 									//request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"tercero/%.f", terceroPost["Id"]), "DELETE", &resultado2, nil)
-									logs.Error(errEstado)
-									c.Data["system"] = estado
-									c.Abort("400")
+									logs.Error("Error --> ", errEstado)
+									c.Ctx.Output.SetStatus(400)
+									c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errEstado.Error())
 								}
 							} else {
-								logs.Error(errEstado)
-								c.Data["system"] = estado
-								c.Abort("400")
+								logs.Error("Error --> ", errEstado)
+								c.Ctx.Output.SetStatus(400)
+								c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errEstado.Error())
 							}
 						} else {
 							//Si pasa un error borra todo lo creado al momento del registro del documento de identidad
 							//var resultado2 map[string]interface{}
 							models.SetInactivo(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"tercero/%.f", terceroPost["Id"]))
 							//request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"tercero/%.f", terceroPost["Id"]), "DELETE", &resultado2, nil)
-							logs.Error(errIdentificacion)
-							c.Data["system"] = identificacion
-							c.Abort("400")
+							logs.Error("Error --> ", errIdentificacion)
+							c.Ctx.Output.SetStatus(400)
+							c.Data["json"] = requestresponse.APIResponseDTO(false, 400, identificacion)
 						}
 					} else {
-						logs.Error(errIdentificacion)
-						c.Data["system"] = identificacion
-						c.Abort("400")
+						logs.Error("Error --> ", errIdentificacion)
+						c.Ctx.Output.SetStatus(400)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errIdentificacion.Error())
 					}
 				} else {
-					logs.Error(errPersona)
-					fmt.Println("errPersona")
-					c.Data["system"] = terceroPost
-					c.Abort("400")
+					logs.Error("Error --> ", errPersona)
+					c.Ctx.Output.SetStatus(400)
+					c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errPersona.Error())
 				}
 			} else {
-				logs.Error(errPersona)
-				c.Data["system"] = terceroPost
-				c.Abort("400")
+				logs.Error("Error --> ", errPersona)
+				c.Ctx.Output.SetStatus(400)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errPersona.Error())
 			}
 		} else {
-			logs.Error("Body contains an incorrect data type or an invalid parameter")
+			logs.Error("Error --> ", "Body contains an incorrect data type or an invalid parameter")
 			c.Ctx.Output.SetStatus(400)
-			c.Data["json"] = map[string]interface{}{"Success": false, "Status": "400", "Message": "Error service PostGuardarPersona: The request contains an incorrect data type or an invalid parameter"}
+			c.Data["json"] = requestresponse.APIResponseDTO(false, 400, "Error service PostGuardarPersona: The request contains an incorrect data type or an invalid parameter")
 		}
 	} else {
-		logs.Error(err)
+		logs.Error("Error --> ", err)
 		c.Ctx.Output.SetStatus(400)
-		c.Data["json"] = map[string]interface{}{"Success": false, "Status": "400", "Message": "Error service PostGuardarPersona: The request contains an incorrect data type or an invalid parameter"}
+		c.Data["json"] = requestresponse.APIResponseDTO(false, 400, "Error service PostGuardarPersona: The request contains an incorrect data type or an invalid parameter")
 	}
 	c.ServeJSON()
 }
@@ -482,8 +487,9 @@ func (c *TerceroController) GuardarPersona() {
 // @Param	body		body 	{}	true		"body for Guardar Datos Complementarios Persona content"
 // @Success 201 {int}
 // @Failure 400 the request contains incorrect syntax
-// @router /guardar_complementarios [post]
+// @router /complementarios [post]
 func (c *TerceroController) GuardarDatosComplementarios() {
+	defer errorhandler.HandlePanic(&c.Controller)
 
 	var tercero map[string]interface{}     // Body POST
 	var HayError bool = false              // Handle Errors
@@ -493,8 +499,6 @@ func (c *TerceroController) GuardarDatosComplementarios() {
 	var terceroOrg map[string]interface{} // tercero info orig if error
 	var LugarPut map[string]interface{}   // resp Put lugar
 
-	var alerta models.Alert
-	alertas := []interface{}{"Response:"}
 	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &tercero); err == nil {
 
 		errtercero := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"tercero/"+fmt.Sprintf("%.f", tercero["Tercero"].(float64)), &terceroget)
@@ -502,11 +506,8 @@ func (c *TerceroController) GuardarDatosComplementarios() {
 			terceroOrg = terceroget
 		} else {
 			HayError = true
-			alertas = append(alertas, errtercero.Error())
-			alerta.Code = "400"
-			alerta.Type = "error"
-			alerta.Body = alertas
-			c.Data["json"] = alerta
+			c.Ctx.Output.SetStatus(400)
+			c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errtercero.Error())
 		}
 
 		if !HayError {
@@ -542,32 +543,28 @@ func (c *TerceroController) GuardarDatosComplementarios() {
 
 						} else {
 							HayError = true
-							logs.Error(errFactorRhPost)
-							//c.Data["development"] = map[string]interface{}{"Code": "400", "Body": err.Error(), "Type": "error"}
-							c.Data["system"] = FactorRhPost
-							c.Abort("400")
+							logs.Error("Error --> ", errFactorRhPost)
+							c.Ctx.Output.SetStatus(400)
+							c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errFactorRhPost.Error())
 						}
 					} else {
 						HayError = true
-						logs.Error(errFactorRhPost)
-						//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-						c.Data["system"] = FactorRhPost
-						c.Abort("400")
+						logs.Error("Error --> ", errFactorRhPost)
+						c.Ctx.Output.SetStatus(400)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errFactorRhPost.Error())
 					}
 
 				} else {
 					HayError = true
-					logs.Error(errGrupoSanguineoPost)
-					//c.Data["development"] = map[string]interface{}{"Code": "400", "Body": err.Error(), "Type": "error"}
-					c.Data["system"] = grupoSanguineoPost
-					c.Abort("400")
+					logs.Error("Error --> ", errGrupoSanguineoPost)
+					c.Ctx.Output.SetStatus(400)
+					c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errGrupoSanguineoPost.Error())
 				}
 			} else {
 				HayError = true
-				logs.Error(errGrupoSanguineoPost)
-				//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-				c.Data["system"] = grupoSanguineoPost
-				c.Abort("400")
+				logs.Error("Error --> ", errGrupoSanguineoPost)
+				c.Ctx.Output.SetStatus(400)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errGrupoSanguineoPost.Error())
 			}
 		}
 
@@ -588,17 +585,15 @@ func (c *TerceroController) GuardarDatosComplementarios() {
 						resultado = append(resultado, poblacionPost1)
 					} else {
 						HayError = true
-						logs.Error(errPoblacionPost1)
-						//c.Data["development"] = map[string]interface{}{"Code": "400", "Body": err.Error(), "Type": "error"}
-						c.Data["system"] = poblacionPost1
-						c.Abort("400")
+						logs.Error("Error --> ", errPoblacionPost1)
+						c.Ctx.Output.SetStatus(400)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errPoblacionPost1.Error())
 					}
 				} else {
 					HayError = true
-					logs.Error(errPoblacionPost1)
-					//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-					c.Data["system"] = poblacionPost1
-					c.Abort("400")
+					logs.Error("Error --> ", errPoblacionPost1)
+					c.Ctx.Output.SetStatus(400)
+					c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errPoblacionPost1.Error())
 				}
 			}
 			if fmt.Sprintf("%v", reflect.TypeOf(tercero["ComprobantePoblacion"])) == "map[string]interface {}" {
@@ -617,15 +612,15 @@ func (c *TerceroController) GuardarDatosComplementarios() {
 
 					} else {
 						HayError = true
-						logs.Error(errPoblacionPost2)
-						c.Data["system"] = poblacionPost2
-						c.Abort("400")
+						logs.Error("Error --> ", errPoblacionPost2)
+						c.Ctx.Output.SetStatus(400)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errPoblacionPost2.Error())
 					}
 				} else {
 					HayError = true
-					logs.Error(errPoblacionPost2)
-					c.Data["system"] = poblacionPost2
-					c.Abort("400")
+					logs.Error("Error --> ", errPoblacionPost2)
+					c.Ctx.Output.SetStatus(400)
+					c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errPoblacionPost2.Error())
 				}
 			}
 		}
@@ -640,17 +635,15 @@ func (c *TerceroController) GuardarDatosComplementarios() {
 
 				} else {
 					HayError = true
-					logs.Error(errLugarPut)
-					//c.Data["development"] = map[string]interface{}{"Code": "400", "Body": err.Error(), "Type": "error"}
-					c.Data["system"] = LugarPut
-					c.Abort("400")
+					logs.Error("Error --> ", errLugarPut)
+					c.Ctx.Output.SetStatus(400)
+					c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errLugarPut.Error())
 				}
 			} else {
 				HayError = true
-				logs.Error(errLugarPut)
-				//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-				c.Data["system"] = LugarPut
-				c.Abort("400")
+				logs.Error("Error --> ", errLugarPut)
+				c.Ctx.Output.SetStatus(400)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errLugarPut.Error())
 			}
 		}
 
@@ -671,17 +664,15 @@ func (c *TerceroController) GuardarDatosComplementarios() {
 						resultado = append(resultado, discapacidadPost1)
 					} else {
 						HayError = true
-						logs.Error(errDiscapacidadPost1)
-						//c.Data["development"] = map[string]interface{}{"Code": "400", "Body": err.Error(), "Type": "error"}
-						c.Data["system"] = discapacidadPost1
-						c.Abort("400")
+						logs.Error("Error --> ", errDiscapacidadPost1)
+						c.Ctx.Output.SetStatus(400)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errDiscapacidadPost1.Error())
 					}
 				} else {
 					HayError = true
-					logs.Error(errDiscapacidadPost1)
-					//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-					c.Data["system"] = discapacidadPost1
-					c.Abort("400")
+					logs.Error("Error --> ", errDiscapacidadPost1)
+					c.Ctx.Output.SetStatus(400)
+					c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errDiscapacidadPost1.Error())
 				}
 			}
 			if fmt.Sprintf("%v", reflect.TypeOf(tercero["ComprobanteDiscapacidad"])) == "map[string]interface {}" {
@@ -700,15 +691,15 @@ func (c *TerceroController) GuardarDatosComplementarios() {
 
 					} else {
 						HayError = true
-						logs.Error(errDiscapacidadPost2)
-						c.Data["system"] = discapacidadPost2
-						c.Abort("400")
+						logs.Error("Error --> ", errDiscapacidadPost2)
+						c.Ctx.Output.SetStatus(400)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errDiscapacidadPost2.Error())
 					}
 				} else {
 					HayError = true
-					logs.Error(errDiscapacidadPost2)
-					c.Data["system"] = discapacidadPost2
-					c.Abort("400")
+					logs.Error("Error --> ", errDiscapacidadPost2)
+					c.Ctx.Output.SetStatus(400)
+					c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errDiscapacidadPost2.Error())
 				}
 			}
 		}
@@ -728,17 +719,17 @@ func (c *TerceroController) GuardarDatosComplementarios() {
 				if errNuevaEPS == nil && fmt.Sprintf("%v", postEPS) != "map[]" && postEPS["Id"] != nil {
 					if postEPS["Status"] == 400 {
 						HayError = true
-						logs.Error(errNuevaEPS)
-						c.Data["system"] = postEPS
-						c.Abort("400")
+						logs.Error("Error --> ", errNuevaEPS)
+						c.Ctx.Output.SetStatus(400)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 400, postEPS)
 					} else {
 						resultado = append(resultado, postEPS)
 					}
 				} else {
 					HayError = true
-					logs.Error(errNuevaEPS)
-					c.Data["system"] = postEPS
-					c.Abort("400")
+					logs.Error("Error --> ", errNuevaEPS)
+					c.Ctx.Output.SetStatus(400)
+					c.Data["json"] = requestresponse.APIResponseDTO(false, 400, postEPS)
 				}
 
 			}
@@ -762,17 +753,17 @@ func (c *TerceroController) GuardarDatosComplementarios() {
 				if errGrupoSisbenPost == nil && fmt.Sprintf("%v", postGrupoSisben) != "map[]" && postGrupoSisben["Id"] != nil {
 					if postGrupoSisben["Status"] == 400 {
 						HayError = true
-						logs.Error(errGrupoSisbenPost)
-						c.Data["system"] = postGrupoSisben
-						c.Abort("400")
+						logs.Error("Error --> ", errGrupoSisbenPost)
+						c.Ctx.Output.SetStatus(400)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 400, postGrupoSisben)
 					} else {
 						resultado = append(resultado, postGrupoSisben)
 					}
 				} else {
 					HayError = true
-					logs.Error(errGrupoSisbenPost)
-					c.Data["system"] = postGrupoSisben
-					c.Abort("400")
+					logs.Error("Error --> ", errGrupoSisbenPost)
+					c.Ctx.Output.SetStatus(400)
+					c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errGrupoSisbenPost.Error())
 				}
 			}
 		}
@@ -791,32 +782,32 @@ func (c *TerceroController) GuardarDatosComplementarios() {
 				if errGrupoSisbenPost == nil && fmt.Sprintf("%v", postNumeroHermanos) != "map[]" && postNumeroHermanos["Id"] != nil {
 					if postNumeroHermanos["Status"] == 400 {
 						HayError = true
-						logs.Error(errGrupoSisbenPost)
-						c.Data["system"] = postNumeroHermanos
-						c.Abort("400")
+						logs.Error("Error --> ", errGrupoSisbenPost)
+						c.Ctx.Output.SetStatus(400)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 400, postNumeroHermanos)
 					} else {
 						resultado = append(resultado, postNumeroHermanos)
 					}
 				} else {
 					HayError = true
-					logs.Error(errGrupoSisbenPost)
-					c.Data["system"] = postNumeroHermanos
-					c.Abort("400")
+					logs.Error("Error --> ", errGrupoSisbenPost)
+					c.Ctx.Output.SetStatus(400)
+					c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errGrupoSisbenPost.Error())
 				}
 			}
 		}
 
 	} else {
 		HayError = true
-		logs.Error(err)
-		//c.Data["development"] = map[string]interface{}{"Code": "400", "Body": err.Error(), "Type": "error"}
-		c.Data["system"] = err
-		c.Abort("400")
+		logs.Error("Error --> ", err)
+		c.Ctx.Output.SetStatus(400)
+		c.Data["json"] = requestresponse.APIResponseDTO(false, 400, err.Error())
 	}
 
 	if !HayError { // if all ok, pass response
 		resultado = append(resultado, LugarPut)
-		c.Data["json"] = resultado
+		c.Ctx.Output.SetStatus(200)
+		c.Data["json"] = requestresponse.APIResponseDTO(true, 200, resultado)
 	} else { // Delete POSTed if error
 		for _, infoComp := range resultado {
 			var respDel map[string]interface{}
@@ -835,8 +826,9 @@ func (c *TerceroController) GuardarDatosComplementarios() {
 // @Param	body		body 	{}	true		"body for Guardar Datos Complementarios Persona content"
 // @Success 201 {int}
 // @Failure 400 the request contains incorrect syntax
-// @router /guardar_complementarios_par [post]
+// @router /complementarios-par [post]
 func (c *TerceroController) GuardarDatosComplementariosParAcademico() {
+	defer errorhandler.HandlePanic(&c.Controller)
 
 	//resultado solicitud de descuento
 	var resultado map[string]interface{}
@@ -844,11 +836,10 @@ func (c *TerceroController) GuardarDatosComplementariosParAcademico() {
 	var tercero map[string]interface{}
 	var terceroget map[string]interface{}
 	var tercerooriginal map[string]interface{}
-	var alerta models.Alert
 	var Area_Conocimiento map[string]interface{}
 	var Nivel_Formacion map[string]interface{}
 	var Institucionr map[string]interface{}
-	alertas := []interface{}{"Response:"}
+	alertas := []interface{}{}
 
 	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &tercero); err == nil {
 
@@ -859,10 +850,8 @@ func (c *TerceroController) GuardarDatosComplementariosParAcademico() {
 		} else {
 
 			alertas = append(alertas, errtercero.Error())
-			alerta.Code = "400"
-			alerta.Type = "error"
-			alerta.Body = alertas
-			c.Data["json"] = alerta
+			c.Ctx.Output.SetStatus(400)
+			c.Data["json"] = requestresponse.APIResponseDTO(false, 400, alertas)
 		}
 
 		Area_ConocimientoTemp := tercero["AreaConocimiento"].(map[string]interface{})["AREA_CONOCIMIENTO"].([]interface{})
@@ -933,54 +922,52 @@ func (c *TerceroController) GuardarDatosComplementariosParAcademico() {
 							if InstitucionPost["Status"] != 400 {
 
 								resultado = tercero
-								c.Data["json"] = resultado
+								c.Ctx.Output.SetStatus(200)
+								c.Data["json"] = requestresponse.APIResponseDTO(true, 200, resultado)
 							} else {
 								var resultado2 map[string]interface{}
 								request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/"+fmt.Sprintf("%v", NivelformacionPost["Id"]), "DELETE", &resultado2, nil)
 								request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/"+fmt.Sprintf("%v", AreaConocimientoPost["Id"]), "DELETE", &resultado2, nil)
-								logs.Error(errInstitucionPost)
-								//c.Data["development"] = map[string]interface{}{"Code": "400", "Body": err.Error(), "Type": "error"}
-								c.Data["system"] = InstitucionPost
-								c.Abort("400")
+								logs.Error("Error --> ", errInstitucionPost)
+								c.Ctx.Output.SetStatus(400)
+								c.Data["json"] = requestresponse.APIResponseDTO(false, 400, alertas)
 							}
 						} else {
-							logs.Error(errInstitucionPost)
-							// c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-							c.Data["system"] = InstitucionPost
-							c.Abort("400")
+							logs.Error("Error --> ", errInstitucionPost)
+							c.Ctx.Output.SetStatus(400)
+							c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errInstitucionPost.Error())
 						}
 					} else {
 						var resultado2 map[string]interface{}
 						request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/"+fmt.Sprintf("%v", AreaConocimientoPost["Id"]), "DELETE", &resultado2, nil)
 
-						logs.Error(errNivelFormacionPost)
-						//c.Data["development"] = map[string]interface{}{"Code": "400", "Body": err.Error(), "Type": "error"}
-						c.Data["system"] = NivelformacionPost
-						c.Abort("400")
+						logs.Error("Error --> ", errNivelFormacionPost)
+						c.Ctx.Output.SetStatus(400)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errNivelFormacionPost.Error())
 					}
 				} else {
-					logs.Error(errNivelFormacionPost)
-					//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-					c.Data["system"] = NivelformacionPost
-					c.Abort("400")
+					logs.Error("Error --> ", errNivelFormacionPost)
+					c.Ctx.Output.SetStatus(400)
+					c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errNivelFormacionPost.Error())
 				}
 
 			} else {
 
-				logs.Error(errAreaConocimientoPost)
-				//c.Data["development"] = map[string]interface{}{"Code": "400", "Body": err.Error(), "Type": "error"}
-				c.Data["system"] = AreaConocimientoPost
-				c.Abort("400")
+				logs.Error("Error --> ", errAreaConocimientoPost)
+				c.Ctx.Output.SetStatus(400)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errAreaConocimientoPost.Error())
 			}
 		} else {
-			logs.Error(errAreaConocimientoPost)
-			//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-			c.Data["system"] = AreaConocimientoPost
-			c.Abort("400")
+			logs.Error("Error --> ", errAreaConocimientoPost)
+			c.Ctx.Output.SetStatus(400)
+			c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errAreaConocimientoPost.Error())
 		}
 
-		c.ServeJSON()
+	} else {
+		c.Ctx.Output.SetStatus(404)
+		c.Data["json"] = requestresponse.APIResponseDTO(false, 404, err.Error())
 	}
+	c.ServeJSON()
 }
 
 // ActualizarDatosComplementarios ...
@@ -989,10 +976,10 @@ func (c *TerceroController) GuardarDatosComplementariosParAcademico() {
 // @Param	body	body 	{}	true		"body for Actualizar los datos complementarios content"
 // @Success 200 {}
 // @Failure 403 body is empty
-// @router /actualizar_complementarios [put]
+// @router /complementarios [put]
 func (c *TerceroController) ActualizarDatosComplementarios() {
-	// alerta que retorna la funcion ConsultaPersona
-	var alerta models.Alert
+	defer errorhandler.HandlePanic(&c.Controller)
+
 	//Persona a la cual se van a agregar los datos complementarios
 	var persona map[string]interface{}
 	//Grupo etnico al que pertenece la persona
@@ -1062,14 +1049,14 @@ func (c *TerceroController) ActualizarDatosComplementarios() {
 							if Poblacion["Status"] != 400 {
 
 							} else {
-								logs.Error(errPoblacionPost)
-								c.Data["system"] = Poblacion
-								c.Abort("400")
+								logs.Error("Error --> ", errPoblacionPost)
+								c.Ctx.Output.SetStatus(400)
+								c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 							}
 						} else {
-							logs.Error(errPoblacionPost)
-							c.Data["system"] = Poblacion
-							c.Abort("400")
+							logs.Error("Error --> ", errPoblacionPost)
+							c.Ctx.Output.SetStatus(400)
+							c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 						}
 					}
 
@@ -1086,14 +1073,14 @@ func (c *TerceroController) ActualizarDatosComplementarios() {
 							if Poblacion["Status"] != 400 {
 
 							} else {
-								logs.Error(errPoblacionPost)
-								c.Data["system"] = Poblacion
-								c.Abort("400")
+								logs.Error("Error --> ", errPoblacionPost)
+								c.Ctx.Output.SetStatus(400)
+								c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 							}
 						} else {
-							logs.Error(errPoblacionPost)
-							c.Data["system"] = Poblacion
-							c.Abort("400")
+							logs.Error("Error --> ", errPoblacionPost)
+							c.Ctx.Output.SetStatus(400)
+							c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 						}
 					}
 				}
@@ -1158,14 +1145,14 @@ func (c *TerceroController) ActualizarDatosComplementarios() {
 							if Discapacidad["Status"] != 400 {
 
 							} else {
-								logs.Error(errDiscapacidadPost)
-								c.Data["system"] = Discapacidad
-								c.Abort("400")
+								logs.Error("Error --> ", errDiscapacidadPost)
+								c.Ctx.Output.SetStatus(400)
+								c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 							}
 						} else {
-							logs.Error(errDiscapacidadPost)
-							c.Data["system"] = Discapacidad
-							c.Abort("400")
+							logs.Error("Error --> ", errDiscapacidadPost)
+							c.Ctx.Output.SetStatus(400)
+							c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 						}
 					}
 
@@ -1182,14 +1169,14 @@ func (c *TerceroController) ActualizarDatosComplementarios() {
 							if Discapacidad["Status"] != 400 {
 
 							} else {
-								logs.Error(errDiscapacidadPost)
-								c.Data["system"] = Discapacidad
-								c.Abort("400")
+								logs.Error("Error --> ", errDiscapacidadPost)
+								c.Ctx.Output.SetStatus(400)
+								c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 							}
 						} else {
-							logs.Error(errDiscapacidadPost)
-							c.Data["system"] = Discapacidad
-							c.Abort("400")
+							logs.Error("Error --> ", errDiscapacidadPost)
+							c.Ctx.Output.SetStatus(400)
+							c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 						}
 					}
 				}
@@ -1238,14 +1225,14 @@ func (c *TerceroController) ActualizarDatosComplementarios() {
 					errNuevaEPS := request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"seguridad_social_tercero", "POST", &postEPS, nuevaEPS)
 					if errNuevaEPS == nil && fmt.Sprintf("%v", postEPS) != "map[]" && postEPS["Id"] != nil {
 						if postEPS["Status"] == 400 {
-							logs.Error(errNuevaEPS)
-							c.Data["system"] = postEPS
-							c.Abort("400")
+							logs.Error("Error --> ", errNuevaEPS)
+							c.Ctx.Output.SetStatus(400)
+							c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 						}
 					} else {
-						logs.Error(errNuevaEPS)
-						c.Data["system"] = postEPS
-						c.Abort("400")
+						logs.Error("Error --> ", errNuevaEPS)
+						c.Ctx.Output.SetStatus(400)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 					}
 				}
 			}
@@ -1278,14 +1265,14 @@ func (c *TerceroController) ActualizarDatosComplementarios() {
 				errGrupoSisbenPost := request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero", "POST", &postGrupoSisben, nuevoGrupoSisben)
 				if errGrupoSisbenPost == nil && fmt.Sprintf("%v", postGrupoSisben) != "map[]" && postGrupoSisben["Id"] != nil {
 					if postGrupoSisben["Status"] == 400 {
-						logs.Error(errGrupoSisbenPost)
-						c.Data["system"] = postGrupoSisben
-						c.Abort("400")
+						logs.Error("Error --> ", errGrupoSisbenPost)
+						c.Ctx.Output.SetStatus(400)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 					}
 				} else {
-					logs.Error(errGrupoSisbenPost)
-					c.Data["system"] = postGrupoSisben
-					c.Abort("400")
+					logs.Error("Error --> ", errGrupoSisbenPost)
+					c.Ctx.Output.SetStatus(400)
+					c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 				}
 			}
 
@@ -1312,19 +1299,18 @@ func (c *TerceroController) ActualizarDatosComplementarios() {
 
 				if errGrupoSisbenPost == nil && fmt.Sprintf("%v", postNumeroHermanos) != "map[]" && postNumeroHermanos["Id"] != nil {
 					if postNumeroHermanos["Status"] == 400 {
-						logs.Error(errGrupoSisbenPost)
-						c.Data["system"] = postNumeroHermanos
-						c.Abort("400")
+						logs.Error("Error --> ", errGrupoSisbenPost)
+						c.Ctx.Output.SetStatus(400)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 					}
 				} else {
-					logs.Error(errGrupoSisbenPost)
-					c.Data["system"] = postNumeroHermanos
-					c.Abort("400")
+					logs.Error("Error --> ", errGrupoSisbenPost)
+					c.Ctx.Output.SetStatus(400)
+					c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 				}
 			}
-
-			alerta.Body = errores
-			c.Data["json"] = alerta
+			c.Ctx.Output.SetStatus(200)
+			c.Data["json"] = requestresponse.APIResponseDTO(true, 200, errores)
 			c.ServeJSON()
 		} else {
 			if errPersona != nil {
@@ -1333,19 +1319,14 @@ func (c *TerceroController) ActualizarDatosComplementarios() {
 			if len(resultado) == 0 {
 				errores = append(errores, []interface{}{"NO existe ninguna persona con este ente"})
 			}
-			alerta.Type = "error"
-			alerta.Code = "400"
-			alerta.Body = errores
-			c.Data["json"] = alerta
+			c.Ctx.Output.SetStatus(400)
+			c.Data["json"] = requestresponse.APIResponseDTO(false, 400, errores)
 			c.ServeJSON()
 		}
 	} else {
 		errores = append(errores, []interface{}{err.Error()})
-		c.Ctx.Output.SetStatus(200)
-		alerta.Type = "error"
-		alerta.Code = "401"
-		alerta.Body = errores
-		c.Data["json"] = alerta
+		c.Ctx.Output.SetStatus(401)
+		c.Data["json"] = requestresponse.APIResponseDTO(false, 401, errores)
 		c.ServeJSON()
 	}
 }
@@ -1356,8 +1337,10 @@ func (c *TerceroController) ActualizarDatosComplementarios() {
 // @Param	numeroDocumento	path	int 	true	"numero documento del tercero"
 // @Success 200 {}
 // @Failure 404 not found resource
-// @router /existe_persona/:numeroDocumento [get]
+// @router /existencia/:numeroDocumento [get]
 func (c *TerceroController) ConsultarExistenciaPersona() {
+	defer errorhandler.HandlePanic(&c.Controller)
+
 	numero := c.Ctx.Input.Param(":numeroDocumento")
 
 	var resultados []map[string]interface{}
@@ -1390,19 +1373,18 @@ func (c *TerceroController) ConsultarExistenciaPersona() {
 					preparedoc["EstadoCivilId"] = estado[0]["Id"]
 				} else {
 					if estado[0]["Message"] == "Not found resource" {
-						c.Data["json"] = nil
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					} else {
-						logs.Error(estado)
-						//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-						c.Data["system"] = errEstado
-						//c.Abort("404")
+						logs.Error("Error --> ", estado)
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					}
 				}
 			} else {
-				logs.Error(estado)
-				//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-				c.Data["system"] = errEstado
-				//c.Abort("404")
+				logs.Error("Error --> ", estado)
+				c.Ctx.Output.SetStatus(404)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 			}
 
 			errGenero := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+
@@ -1413,19 +1395,18 @@ func (c *TerceroController) ConsultarExistenciaPersona() {
 					preparedoc["GeneroId"] = genero[0]["Id"]
 				} else {
 					if genero[0]["Message"] == "Not found resource" {
-						c.Data["json"] = nil
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					} else {
-						logs.Error(genero)
-						//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-						c.Data["system"] = errGenero
-						//c.Abort("404")
+						logs.Error("Error --> ", genero)
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					}
 				}
 			} else {
-				logs.Error(genero)
-				//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-				c.Data["system"] = errGenero
-				//c.Abort("404")
+				logs.Error("Error --> ", genero)
+				c.Ctx.Output.SetStatus(404)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 			}
 
 			errOrientacionSexual := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+
@@ -1436,19 +1417,18 @@ func (c *TerceroController) ConsultarExistenciaPersona() {
 					preparedoc["OrientacionSexualId"] = orientacionSexual[0]["Id"]
 				} else {
 					if orientacionSexual[0]["Message"] == "Not found resource" {
-						c.Data["json"] = nil
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					} else {
-						logs.Error(orientacionSexual)
-						//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-						c.Data["system"] = errOrientacionSexual
-						//c.Abort("404")
+						logs.Error("Error --> ", orientacionSexual)
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					}
 				}
 			} else {
-				logs.Error(orientacionSexual)
-				//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-				c.Data["system"] = errOrientacionSexual
-				//c.Abort("404")
+				logs.Error("Error --> ", orientacionSexual)
+				c.Ctx.Output.SetStatus(404)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 			}
 
 			errIdentidadGenero := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+
@@ -1459,19 +1439,18 @@ func (c *TerceroController) ConsultarExistenciaPersona() {
 					preparedoc["IdentidadGeneroId"] = identidadGenero[0]["Id"]
 				} else {
 					if identidadGenero[0]["Message"] == "Not found resource" {
-						c.Data["json"] = nil
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					} else {
-						logs.Error(identidadGenero)
-						//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-						c.Data["system"] = errIdentidadGenero
-						//c.Abort("404")
+						logs.Error("Error --> ", identidadGenero)
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					}
 				}
 			} else {
-				logs.Error(identidadGenero)
-				//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-				c.Data["system"] = errIdentidadGenero
-				//c.Abort("404")
+				logs.Error("Error --> ", identidadGenero)
+				c.Ctx.Output.SetStatus(404)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 			}
 
 			IdTelefono, _ := models.IdInfoCompTercero("10", "TELEFONO")
@@ -1485,18 +1464,19 @@ func (c *TerceroController) ConsultarExistenciaPersona() {
 					preparedoc["TelefonoId"] = telefono[0]["Id"]
 				}
 			} else {
-				logs.Error(telefono)
-				c.Data["system"] = errTelefono
+				logs.Error("Error --> ", telefono)
+				c.Ctx.Output.SetStatus(404)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 			}
 
 			resultados = append(resultados, preparedoc)
 		}
-		c.Data["json"] = resultados
+		c.Ctx.Output.SetStatus(200)
+		c.Data["json"] = requestresponse.APIResponseDTO(true, 200, resultados)
 	} else {
-		logs.Error(documentos)
-		//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-		c.Data["system"] = errDocumentos
-		c.Abort("404")
+		logs.Error("Error --> ", documentos)
+		c.Ctx.Output.SetStatus(404)
+		c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 	}
 
 	c.ServeJSON()
@@ -1508,8 +1488,10 @@ func (c *TerceroController) ConsultarExistenciaPersona() {
 // @Param	tercero_id	path	int	true	"Id del tercero"
 // @Success 200 {}
 // @Failure 404 not found resource
-// @router /consultar_persona/:tercero_id [get]
+// @router /:tercero_id [get]
 func (c *TerceroController) ConsultarPersona() {
+	defer errorhandler.HandlePanic(&c.Controller)
+
 	//Id del tercero
 	idStr := c.Ctx.Input.Param(":tercero_id")
 	//fmt.Println(idStr)
@@ -1551,25 +1533,19 @@ func (c *TerceroController) ConsultarPersona() {
 							//formatdata.JsonPrint(resultado)
 						} else {
 							if estado[0]["Message"] == "Not found resource" {
-								c.Data["json"] = nil
+								c.Ctx.Output.SetStatus(404)
+								c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 							} else {
-								logs.Error(estado)
-								//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-								c.Data["system"] = errEstado
-								//c.Abort("404")
+								logs.Error("Error --> ", estado)
+								c.Ctx.Output.SetStatus(404)
+								c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 							}
 						}
 					} else {
-						logs.Error(estado)
-						//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-						c.Data["system"] = errEstado
-						//c.Abort("404")
+						logs.Error("Error --> ", estado)
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					}
-					//fmt.Println("ojoooooo paso estado")
-					//fmt.Print(persona[0]["Id"])
-					//fmt.Print("http://" + beego.AppConfig.String("TercerosService") + "info_complementaria_tercero?query=TerceroId.Id:" +
-					//fmt.Sprintf("%v", persona[0]["Id"]) + ",InfoComplementariaId.GrupoInfoComplementariaId.Id:6")
-					//formatdata.JsonPrint(genero)
 
 					errGenero := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+
 						fmt.Sprintf("%v", persona[0]["Id"])+",InfoComplementariaId.GrupoInfoComplementariaId.Id:6", &genero)
@@ -1577,23 +1553,20 @@ func (c *TerceroController) ConsultarPersona() {
 						if genero[0]["Status"] != 404 {
 							resultado["Genero"] = genero[0]["InfoComplementariaId"]
 							resultado["GeneroId"] = genero[0]["Id"]
-							//fmt.Println("Resultado genero")
-							//formatdata.JsonPrint(resultado)
 						} else {
 							if genero[0]["Message"] == "Not found resource" {
-								c.Data["json"] = nil
+								c.Ctx.Output.SetStatus(404)
+								c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 							} else {
-								logs.Error(genero)
-								//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-								c.Data["system"] = errGenero
-								//c.Abort("404")
+								logs.Error("Error --> ", genero)
+								c.Ctx.Output.SetStatus(404)
+								c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 							}
 						}
 					} else {
-						logs.Error(genero)
-						//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-						c.Data["system"] = errGenero
-						//c.Abort("404")
+						logs.Error("Error --> ", genero)
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					}
 
 					errOrientacionSexual := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+
@@ -1604,19 +1577,18 @@ func (c *TerceroController) ConsultarPersona() {
 							resultado["OrientacionSexualId"] = orientacionSexual[0]["Id"]
 						} else {
 							if orientacionSexual[0]["Message"] == "Not found resource" {
-								c.Data["json"] = nil
+								c.Ctx.Output.SetStatus(404)
+								c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 							} else {
-								logs.Error(orientacionSexual)
-								//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-								c.Data["system"] = errOrientacionSexual
-								//c.Abort("404")
+								logs.Error("Error --> ", orientacionSexual)
+								c.Ctx.Output.SetStatus(404)
+								c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 							}
 						}
 					} else {
-						logs.Error(orientacionSexual)
-						//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-						c.Data["system"] = errOrientacionSexual
-						//c.Abort("404")
+						logs.Error("Error --> ", orientacionSexual)
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					}
 
 					errIdentidadGenero := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+
@@ -1627,19 +1599,18 @@ func (c *TerceroController) ConsultarPersona() {
 							resultado["IdentidadGeneroId"] = identidadGenero[0]["Id"]
 						} else {
 							if identidadGenero[0]["Message"] == "Not found resource" {
-								c.Data["json"] = nil
+								c.Ctx.Output.SetStatus(404)
+								c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 							} else {
-								logs.Error(identidadGenero)
-								//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-								c.Data["system"] = errIdentidadGenero
-								//c.Abort("404")
+								logs.Error("Error --> ", identidadGenero)
+								c.Ctx.Output.SetStatus(404)
+								c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 							}
 						}
 					} else {
-						logs.Error(identidadGenero)
-						//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-						c.Data["system"] = errIdentidadGenero
-						//c.Abort("404")
+						logs.Error("Error --> ", identidadGenero)
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					}
 
 					IdTelefono, _ := models.IdInfoCompTercero("10", "TELEFONO")
@@ -1653,43 +1624,43 @@ func (c *TerceroController) ConsultarPersona() {
 							resultado["TelefonoId"] = telefono[0]["Id"]
 						}
 					} else {
-						logs.Error(telefono)
-						c.Data["system"] = errTelefono
+						logs.Error("Error --> ", telefono)
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					}
 
-					c.Data["json"] = resultado
+					c.Ctx.Output.SetStatus(200)
+					c.Data["json"] = requestresponse.APIResponseDTO(true, 200, resultado)
 
 				} else {
 					if identificacion[0]["Message"] == "Not found resource" {
-						c.Data["json"] = nil
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					} else {
-						logs.Error(identificacion)
-						//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-						c.Data["system"] = errIdentificacion
-						c.Abort("404")
+						logs.Error("Error --> ", identificacion)
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					}
 				}
 			} else {
-				logs.Error(identificacion)
-				//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-				c.Data["system"] = errIdentificacion
-				c.Abort("404")
+				logs.Error("Error --> ", identificacion)
+				c.Ctx.Output.SetStatus(404)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 			}
 		} else {
 			if persona[0]["Message"] == "Not found resource" {
-				c.Data["json"] = nil
+				c.Ctx.Output.SetStatus(404)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 			} else {
-				logs.Error(persona)
-				//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-				c.Data["system"] = errPersona
-				c.Abort("404")
+				logs.Error("Error --> ", persona)
+				c.Ctx.Output.SetStatus(404)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 			}
 		}
 	} else {
-		logs.Error(persona)
-		//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-		c.Data["system"] = errPersona
-		c.Abort("404")
+		logs.Error("Error --> ", persona)
+		c.Ctx.Output.SetStatus(404)
+		c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 
 	}
 	c.ServeJSON()
@@ -1701,8 +1672,9 @@ func (c *TerceroController) ConsultarPersona() {
 // @Param	body		body 	{}	true		"body for Guardar DatosContacto content"
 // @Success 201 {int}
 // @Failure 400 the request contains incorrect syntax
-// @router /guardar_datos_contacto [post]
+// @router /contacto [post]
 func (c *TerceroController) GuardarDatosContacto() {
+	defer errorhandler.HandlePanic(&c.Controller)
 
 	var resultado map[string]interface{}
 	var tercero map[string]interface{}
@@ -1825,7 +1797,8 @@ func (c *TerceroController) GuardarDatosContacto() {
 																	if correoelectronicotercero["Status"] != 400 {
 																		// Resultado final
 																		resultado = tercero
-																		c.Data["json"] = resultado
+																		c.Ctx.Output.SetStatus(200)
+																		c.Data["json"] = requestresponse.APIResponseDTO(true, 200, resultado)
 																	} else {
 																		//Si pasa un error borra todo lo creado al momento del registro del correo electronico
 																		var resultado2 map[string]interface{}
@@ -1836,14 +1809,14 @@ func (c *TerceroController) GuardarDatosContacto() {
 																		request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", lugarresidenciaPost["Id"]), "DELETE", &resultado2, nil)
 																		request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", direccionPost["Id"]), "DELETE", &resultado2, nil)
 																		request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", estratoquiencosteaPost["Id"]), "DELETE", &resultado2, nil)
-																		logs.Error(errCorreo)
-																		c.Data["system"] = correoelectronicoPost
-																		c.Abort("400")
+																		logs.Error("Error --> ", errCorreo)
+																		c.Ctx.Output.SetStatus(400)
+																		c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 																	}
 																} else {
-																	logs.Error(errCorreo)
-																	c.Data["system"] = correoelectronicoPost
-																	c.Abort("400")
+																	logs.Error("Error --> ", errCorreo)
+																	c.Ctx.Output.SetStatus(400)
+																	c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 																}
 
 															} else {
@@ -1855,14 +1828,14 @@ func (c *TerceroController) GuardarDatosContacto() {
 																request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", telefonoalternativoPost["Id"]), "DELETE", &resultado2, nil)
 																request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", lugarresidenciaPost["Id"]), "DELETE", &resultado2, nil)
 																request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", direccionPost["Id"]), "DELETE", &resultado2, nil)
-																logs.Error(errEstratoResponsable)
-																c.Data["system"] = estratoquiencosteaPost
-																c.Abort("400")
+																logs.Error("Error --> ", errEstratoResponsable)
+																c.Ctx.Output.SetStatus(400)
+																c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 															}
 														} else {
-															logs.Error(errEstratoResponsable)
-															c.Data["system"] = estratoquiencosteaPost
-															c.Abort("400")
+															logs.Error("Error --> ", errEstratoResponsable)
+															c.Ctx.Output.SetStatus(400)
+															c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 														}
 
 													} else {
@@ -1873,14 +1846,14 @@ func (c *TerceroController) GuardarDatosContacto() {
 														request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", telefonoPost["Id"]), "DELETE", &resultado2, nil)
 														request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", telefonoalternativoPost["Id"]), "DELETE", &resultado2, nil)
 														request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", lugarresidenciaPost["Id"]), "DELETE", &resultado2, nil)
-														logs.Error(errDireccion)
-														c.Data["system"] = direccionPost
-														c.Abort("400")
+														logs.Error("Error --> ", errDireccion)
+														c.Ctx.Output.SetStatus(400)
+														c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 													}
 												} else {
-													logs.Error(errDireccion)
-													c.Data["system"] = direccionPost
-													c.Abort("400")
+													logs.Error("Error --> ", errDireccion)
+													c.Ctx.Output.SetStatus(400)
+													c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 												}
 											} else {
 												//Si pasa un error borra todo lo creado al momento del registro del lugar de residencia
@@ -1889,14 +1862,14 @@ func (c *TerceroController) GuardarDatosContacto() {
 												request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", codigopostalPost["Id"]), "DELETE", &resultado2, nil)
 												request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", telefonoPost["Id"]), "DELETE", &resultado2, nil)
 												request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", telefonoalternativoPost["Id"]), "DELETE", &resultado2, nil)
-												logs.Error(errLugarResidencia)
-												c.Data["system"] = lugarresidenciaPost
-												c.Abort("400")
+												logs.Error("Error --> ", errLugarResidencia)
+												c.Ctx.Output.SetStatus(400)
+												c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 											}
 										} else {
-											logs.Error(errLugarResidencia)
-											c.Data["system"] = lugarresidenciaPost
-											c.Abort("400")
+											logs.Error("Error --> ", errLugarResidencia)
+											c.Ctx.Output.SetStatus(400)
+											c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 										}
 									} else {
 										//Si pasa un error borra todo lo creado al momento del registro del telefono alterno
@@ -1905,56 +1878,56 @@ func (c *TerceroController) GuardarDatosContacto() {
 										request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", codigopostalPost["Id"]), "DELETE", &resultado2, nil)
 										request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", telefonoPost["Id"]), "DELETE", &resultado2, nil)
 
-										logs.Error(errTelefonoAlterno)
-										c.Data["system"] = telefonoalternativoPost
-										c.Abort("400")
+										logs.Error("Error --> ", errTelefonoAlterno)
+										c.Ctx.Output.SetStatus(400)
+										c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 									}
 								} else {
-									logs.Error(errTelefonoAlterno)
-									c.Data["system"] = telefonoalternativoPost
-									c.Abort("400")
+									logs.Error("Error --> ", errTelefonoAlterno)
+									c.Ctx.Output.SetStatus(400)
+									c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 								}
 							} else {
 								//Si pasa un error borra todo lo creado al momento del registro del telefono
 								var resultado2 map[string]interface{}
 								request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", EstratoPost["Id"]), "DELETE", &resultado2, nil)
 								request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", codigopostalPost["Id"]), "DELETE", &resultado2, nil)
-								logs.Error(errTelefono)
-								c.Data["system"] = telefonoPost
-								c.Abort("400")
+								logs.Error("Error --> ", errTelefono)
+								c.Ctx.Output.SetStatus(400)
+								c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 							}
 						} else {
-							logs.Error(errTelefono)
-							c.Data["system"] = telefonoPost
-							c.Abort("400")
+							logs.Error("Error --> ", errTelefono)
+							c.Ctx.Output.SetStatus(400)
+							c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 						}
 					} else {
 						//Si pasa un error borra todo lo creado al momento del registro del codigo postal
 						var resultado2 map[string]interface{}
 						request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", EstratoPost["Id"]), "DELETE", &resultado2, nil)
-						logs.Error(errCodigoPostal)
-						c.Data["system"] = codigopostalPost
-						c.Abort("400")
+						logs.Error("Error --> ", errCodigoPostal)
+						c.Ctx.Output.SetStatus(400)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 					}
 				} else {
-					logs.Error(errCodigoPostal)
-					c.Data["system"] = codigopostalPost
-					c.Abort("400")
+					logs.Error("Error --> ", errCodigoPostal)
+					c.Ctx.Output.SetStatus(400)
+					c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 				}
 			} else {
-				logs.Error(errEstrato)
-				c.Data["system"] = EstratoPost
-				c.Abort("400")
+				logs.Error("Error --> ", errEstrato)
+				c.Ctx.Output.SetStatus(400)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 			}
 		} else {
-			logs.Error(errEstrato)
-			c.Data["system"] = EstratoPost
-			c.Abort("400")
+			logs.Error("Error --> ", errEstrato)
+			c.Ctx.Output.SetStatus(400)
+			c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 		}
 	} else {
-		logs.Error(err)
-		c.Data["system"] = err
-		c.Abort("400")
+		logs.Error("Error --> ", err)
+		c.Ctx.Output.SetStatus(400)
+		c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 
 	}
 	c.ServeJSON()
@@ -1966,8 +1939,10 @@ func (c *TerceroController) GuardarDatosContacto() {
 // @Param	tercero_id	path	int	true	"Id del ente"
 // @Success 200 {}
 // @Failure 404 not found resource
-// @router /consultar_complementarios/:tercero_id [get]
+// @router /:tercero_id/complementarios [get]
 func (c *TerceroController) ConsultarDatosComplementarios() {
+	defer errorhandler.HandlePanic(&c.Controller)
+
 	//Id de la persona
 	idStr := c.Ctx.Input.Param(":tercero_id")
 	//resultado datos complementarios persona
@@ -1975,8 +1950,6 @@ func (c *TerceroController) ConsultarDatosComplementarios() {
 	var resultado map[string]interface{}
 	var errorGetAll bool
 	var tercero []map[string]interface{}
-	var alerta models.Alert
-	alertas := []interface{}{}
 
 	errTercero := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"/tercero/?query=Id:"+idStr, &tercero)
 
@@ -2085,190 +2058,137 @@ func (c *TerceroController) ConsultarDatosComplementarios() {
 															}
 
 															respuesta["Data"] = resultado
-															c.Data["json"] = resultado
+															c.Ctx.Output.SetStatus(200)
+															c.Data["json"] = requestresponse.APIResponseDTO(true, 200, resultado)
 														} else {
 															if lugar["Message"] == "Not found resource" {
 																errorGetAll = true
-																alertas = append(alertas, "Not found resource")
-																alerta.Code = "404"
-																alerta.Type = "error"
-																alerta.Body = alertas
-																c.Data["json"] = map[string]interface{}{"Response": alerta}
+																c.Ctx.Output.SetStatus(404)
+																c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 															} else {
 																errorGetAll = true
-																alertas = append(alertas, errLugar.Error())
-																alerta.Code = "400"
-																alerta.Type = "error"
-																alerta.Body = alertas
-																c.Data["json"] = map[string]interface{}{"Response": alerta}
+																c.Ctx.Output.SetStatus(400)
+																c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 															}
 														}
 													} else {
 														errorGetAll = true
-														alertas = append(alertas, errLugar)
-														alerta.Code = "404"
-														alerta.Type = "error"
-														alerta.Body = alertas
-														c.Data["json"] = map[string]interface{}{"Response": alerta}
+														c.Ctx.Output.SetStatus(404)
+														c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 													}
 												} else {
 													if ubicacionEnte["Message"] == "Not found resource" {
 														errorGetAll = true
-														alertas = append(alertas, "Not found resource")
-														alerta.Code = "404"
-														alerta.Type = "error"
-														alerta.Body = alertas
-														c.Data["json"] = map[string]interface{}{"Response": alerta}
+														c.Ctx.Output.SetStatus(404)
+														c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 													} else {
 														errorGetAll = true
-														alertas = append(alertas, errUbicacion)
-														alerta.Code = "404"
-														alerta.Type = "error"
-														alerta.Body = alertas
-														c.Data["json"] = map[string]interface{}{"Response": alerta}
+														log.Error(errUbicacion)
+														c.Ctx.Output.SetStatus(404)
+														c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 													}
 												}
 											} else {
 												errorGetAll = true
-												alertas = append(alertas, errUbicacion)
-												alerta.Code = "404"
-												alerta.Type = "error"
-												alerta.Body = alertas
-												c.Data["json"] = map[string]interface{}{"Response": alerta}
+												log.Error(errUbicacion)
+												c.Ctx.Output.SetStatus(404)
+												c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 											}
 
 										} else {
 											if discapacidades[0]["Message"] == "Not found resource" {
 												errorGetAll = true
-												alertas = append(alertas, "Not found resource")
-												alerta.Code = "404"
-												alerta.Type = "error"
-												alerta.Body = alertas
-												c.Data["json"] = map[string]interface{}{"Response": alerta}
+												c.Ctx.Output.SetStatus(404)
+												c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 											} else {
 												errorGetAll = true
-												alertas = append(alertas, errDiscapacidad)
-												alerta.Code = "404"
-												alerta.Type = "error"
-												alerta.Body = alertas
-												c.Data["json"] = map[string]interface{}{"Response": alerta}
+												log.Error(errDiscapacidad)
+												c.Ctx.Output.SetStatus(404)
+												c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 											}
 										}
 									} else {
 										errorGetAll = true
-										alertas = append(alertas, errDiscapacidad)
-										alerta.Code = "404"
-										alerta.Type = "error"
-										alerta.Body = alertas
-										c.Data["json"] = map[string]interface{}{"Response": alerta}
+										log.Error(errDiscapacidad)
+										c.Ctx.Output.SetStatus(404)
+										c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 									}
 								} else {
 									if fatorRHGet[0]["Message"] == "Not found resource" {
 										errorGetAll = true
-										alertas = append(alertas, "Not found resource")
-										alerta.Code = "404"
-										alerta.Type = "error"
-										alerta.Body = alertas
-										c.Data["json"] = map[string]interface{}{"Response": alerta}
+										c.Ctx.Output.SetStatus(404)
+										c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 									} else {
 										errorGetAll = true
-										alertas = append(alertas, errFactorRh)
-										alerta.Code = "404"
-										alerta.Type = "error"
-										alerta.Body = alertas
-										c.Data["json"] = map[string]interface{}{"Response": alerta}
+										log.Error(errFactorRh)
+										c.Ctx.Output.SetStatus(404)
+										c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 									}
 								}
 							} else {
 								errorGetAll = true
-								alertas = append(alertas, errFactorRh)
-								alerta.Code = "404"
-								alerta.Type = "error"
-								alerta.Body = alertas
-								c.Data["json"] = map[string]interface{}{"Response": alerta}
+								log.Error(errFactorRh)
+								c.Ctx.Output.SetStatus(404)
+								c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 							}
 						} else {
 							if grupoSanguineo[0]["Message"] == "Not found resource" {
 								errorGetAll = true
-								alertas = append(alertas, "Not found resource")
-								alerta.Code = "404"
-								alerta.Type = "error"
-								alerta.Body = alertas
-								c.Data["json"] = map[string]interface{}{"Response": alerta}
+								c.Ctx.Output.SetStatus(404)
+								c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 							} else {
 								errorGetAll = true
-								alertas = append(alertas, errGrupoSanguineo)
-								alerta.Code = "404"
-								alerta.Type = "error"
-								alerta.Body = alertas
-								c.Data["json"] = map[string]interface{}{"Response": alerta}
+								log.Error(errGrupoSanguineo)
+								c.Ctx.Output.SetStatus(404)
+								c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 							}
 						}
 					} else {
 						errorGetAll = true
-						alertas = append(alertas, errGrupoSanguineo)
-						alerta.Code = "404"
-						alerta.Type = "error"
-						alerta.Body = alertas
-						c.Data["json"] = map[string]interface{}{"Response": alerta}
+						log.Error(errGrupoSanguineo)
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					}
 				} else {
 					if poblaciones[0]["Message"] == "Not found resource" {
 						errorGetAll = true
-						alertas = append(alertas, "Not found resource")
-						alerta.Code = "404"
-						alerta.Type = "error"
-						alerta.Body = alertas
-						c.Data["json"] = map[string]interface{}{"Response": alerta}
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					} else {
 						errorGetAll = true
-						alertas = append(alertas, errPoblacion)
-						alerta.Code = "404"
-						alerta.Type = "error"
-						alerta.Body = alertas
-						c.Data["json"] = map[string]interface{}{"Response": alerta}
+						log.Error(errPoblacion)
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					}
 				}
 			} else {
 				errorGetAll = true
-				alertas = append(alertas, errPoblacion)
-				alerta.Code = "404"
-				alerta.Type = "error"
-				alerta.Body = alertas
-				c.Data["json"] = map[string]interface{}{"Response": alerta}
+				log.Error(errPoblacion)
+				c.Ctx.Output.SetStatus(404)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 			}
 		} else {
 			if tercero[0]["Message"] == "Not found resource" {
 				errorGetAll = true
-				alertas = append(alertas, "Not found resource")
-				alerta.Code = "404"
-				alerta.Type = "error"
-				alerta.Body = alertas
-				c.Data["json"] = map[string]interface{}{"Response": alerta}
+				c.Ctx.Output.SetStatus(404)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 			} else {
 				errorGetAll = true
-				alertas = append(alertas, errTercero)
-				alerta.Code = "404"
-				alerta.Type = "error"
-				alerta.Body = alertas
-				c.Data["json"] = map[string]interface{}{"Response": alerta}
+				log.Error(errTercero)
+				c.Ctx.Output.SetStatus(404)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 			}
 		}
 	} else {
 		errorGetAll = true
-		alertas = append(alertas, errTercero)
-		alerta.Code = "404"
-		alerta.Type = "error"
-		alerta.Body = alertas
-		c.Data["json"] = map[string]interface{}{"Response": alerta}
+		log.Error(errTercero)
+		c.Ctx.Output.SetStatus(404)
+		c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 	}
 
 	if !errorGetAll {
-		alertas = append(alertas, respuesta)
-		alerta.Code = "200"
-		alerta.Type = "OK"
-		alerta.Body = alertas
-		c.Data["json"] = map[string]interface{}{"Response": alerta}
+		c.Ctx.Output.SetStatus(200)
+		c.Data["json"] = requestresponse.APIResponseDTO(true, 200, respuesta)
 	}
 	c.ServeJSON()
 }
@@ -2279,8 +2199,10 @@ func (c *TerceroController) ConsultarDatosComplementarios() {
 // @Param	tercero_id	path	int	true	"Id del Tercero"
 // @Success 200 {}
 // @Failure 404 not found resource
-// @router /consultar_contacto/:tercero_id [get]
+// @router /:tercero_id/contacto [get]
 func (c *TerceroController) ConsultarDatosContacto() {
+	defer errorhandler.HandlePanic(&c.Controller)
+
 	//Id de la persona
 	idStr := c.Ctx.Input.Param(":tercero_id")
 	//resultado datos complementarios persona
@@ -2349,169 +2271,160 @@ func (c *TerceroController) ConsultarDatosContacto() {
 																				if lugar["Status"] != 404 {
 																					ubicacionEnte[0]["Lugar"] = lugar
 																					resultado["UbicacionEnte"] = ubicacionEnte[0]
-																					c.Data["json"] = resultado
+																					c.Ctx.Output.SetStatus(200)
+																					c.Data["json"] = requestresponse.APIResponseDTO(true, 200, resultado)
 																				} else {
 																					if lugar["Message"] == "Not found resource" {
-																						c.Data["json"] = nil
+																						c.Ctx.Output.SetStatus(404)
+																						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 																					} else {
-																						logs.Error(lugar)
-																						//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-																						c.Data["system"] = errLugar
-																						c.Abort("404")
+																						logs.Error("Error --> ", lugar)
+																						c.Ctx.Output.SetStatus(404)
+																						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 																					}
 																				}
 																			} else {
-																				logs.Error(lugar)
-																				//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-																				c.Data["system"] = errLugar
-																				c.Abort("404")
+																				logs.Error("Error --> ", lugar)
+																				c.Ctx.Output.SetStatus(404)
+																				c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 																			}
 
 																		} else {
 																			if ubicacionEnte[0]["Message"] == "Not found resource" {
-																				c.Data["json"] = nil
+																				c.Ctx.Output.SetStatus(404)
+																				c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 																			} else {
-																				logs.Error(ubicacionEnte)
-																				//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-																				c.Data["system"] = errUbicacion
-																				c.Abort("404")
+																				logs.Error("Error --> ", ubicacionEnte)
+																				c.Ctx.Output.SetStatus(404)
+																				c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 																			}
 																		}
 																	} else {
-																		logs.Error(ubicacionEnte)
-																		//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-																		c.Data["system"] = errUbicacion
-																		c.Abort("404")
+																		logs.Error("Error --> ", ubicacionEnte)
+																		c.Ctx.Output.SetStatus(404)
+																		c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 																	}
 																} else {
 																	if Correo[0]["Message"] == "Not found resource" {
-																		c.Data["json"] = nil
+																		c.Ctx.Output.SetStatus(404)
+																		c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 																	} else {
-																		logs.Error(Correo)
-																		//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-																		c.Data["system"] = errCorreo
-																		c.Abort("404")
+																		logs.Error("Error --> ", Correo)
+																		c.Ctx.Output.SetStatus(404)
+																		c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 																	}
 																}
 															} else {
-																logs.Error(Correo)
-																//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-																c.Data["system"] = errCorreo
-																c.Abort("404")
+																logs.Error("Error --> ", Correo)
+																c.Ctx.Output.SetStatus(404)
+																c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 															}
 														} else {
 															if Direccion[0]["Message"] == "Not found resource" {
-																c.Data["json"] = nil
+																c.Ctx.Output.SetStatus(404)
+																c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 															} else {
-																logs.Error(Direccion)
-																//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-																c.Data["system"] = errDireccion
-																c.Abort("404")
+																logs.Error("Error --> ", Direccion)
+																c.Ctx.Output.SetStatus(404)
+																c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 															}
 														}
 													} else {
-														logs.Error(Direccion)
-														//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-														c.Data["system"] = errDireccion
-														c.Abort("404")
+														logs.Error("Error --> ", Direccion)
+														c.Ctx.Output.SetStatus(404)
+														c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 													}
 
 												} else {
 													if TelefonoAlterno[0]["Message"] == "Not found resource" {
-														c.Data["json"] = nil
+														c.Ctx.Output.SetStatus(404)
+														c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 													} else {
-														logs.Error(TelefonoAlterno)
-														//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-														c.Data["system"] = errTelefonoAlterno
-														c.Abort("404")
+														logs.Error("Error --> ", TelefonoAlterno)
+														c.Ctx.Output.SetStatus(404)
+														c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 													}
 												}
 											} else {
-												logs.Error(TelefonoAlterno)
-												//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-												c.Data["system"] = errTelefonoAlterno
-												c.Abort("404")
+												logs.Error("Error --> ", TelefonoAlterno)
+												c.Ctx.Output.SetStatus(404)
+												c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 											}
 
 										} else {
 											if Telefono[0]["Message"] == "Not found resource" {
-												c.Data["json"] = nil
+												c.Ctx.Output.SetStatus(404)
+												c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 											} else {
-												logs.Error(Telefono)
-												//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-												c.Data["system"] = errTelefono
-												c.Abort("404")
+												logs.Error("Error --> ", Telefono)
+												c.Ctx.Output.SetStatus(404)
+												c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 											}
 										}
 									} else {
-										logs.Error(Telefono)
-										//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-										c.Data["system"] = errTelefono
-										c.Abort("404")
+										logs.Error("Error --> ", Telefono)
+										c.Ctx.Output.SetStatus(404)
+										c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 									}
 								} else {
 									if CodigoPostal[0]["Message"] == "Not found resource" {
-										c.Data["json"] = nil
+										c.Ctx.Output.SetStatus(404)
+										c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 									} else {
-										logs.Error(CodigoPostal)
-										//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-										c.Data["system"] = errCodigoPostal
-										c.Abort("404")
+										logs.Error("Error --> ", CodigoPostal)
+										c.Ctx.Output.SetStatus(404)
+										c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 									}
 								}
 							} else {
-								logs.Error(CodigoPostal)
-								//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-								c.Data["system"] = errCodigoPostal
-								c.Abort("404")
+								logs.Error("Error --> ", errCodigoPostal.Error())
+								c.Ctx.Output.SetStatus(404)
+								c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 							}
 						} else {
 							if estratoacudiente[0]["Message"] == "Not found resource" {
-								c.Data["json"] = nil
+								c.Ctx.Output.SetStatus(404)
+								c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 							} else {
-								logs.Error(estratoacudiente)
-								//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-								c.Data["system"] = errEstratoAcudiente
-								c.Abort("404")
+								logs.Error("Error --> ", estratoacudiente)
+								c.Ctx.Output.SetStatus(404)
+								c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 							}
 						}
 					} else {
-						logs.Error(estratoacudiente)
-						//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-						c.Data["system"] = errEstratoAcudiente
-						c.Abort("404")
+						logs.Error("Error --> ", errEstratoAcudiente)
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					}
 				} else {
 					if estratotercero[0]["Message"] == "Not found resource" {
-						c.Data["json"] = nil
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					} else {
-						logs.Error(estratotercero)
-						//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-						c.Data["system"] = errEstrato
-						c.Abort("404")
+						logs.Error("Error --> ", estratotercero)
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					}
 				}
 			} else {
-				logs.Error(estratotercero)
-				//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-				c.Data["system"] = errEstrato
-				c.Abort("404")
+				logs.Error("Error --> ", errEstrato)
+				c.Ctx.Output.SetStatus(404)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 			}
 		} else {
 			if persona[0]["Message"] == "Not found resource" {
-				c.Data["json"] = nil
+				c.Ctx.Output.SetStatus(404)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 			} else {
-				logs.Error(persona)
-				//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-				c.Data["system"] = errPersona
-				c.Abort("404")
+				logs.Error("Error --> ", persona)
+				c.Ctx.Output.SetStatus(404)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 			}
 		}
 	} else {
-		logs.Error(persona)
-		//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-		c.Data["system"] = errPersona
-		c.Abort("404")
+		logs.Error("Error --> ", errPersona)
+		c.Ctx.Output.SetStatus(404)
+		c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 	}
 	c.ServeJSON()
 }
@@ -2522,8 +2435,10 @@ func (c *TerceroController) ConsultarDatosContacto() {
 // @Param	tercero_id	path	int	true	"Id del Tercero"
 // @Success 200 {}
 // @Failure 404 not found resource
-// @router /consultar_familiar/:tercero_id [get]
+// @router /:tercero_id/familiar [get]
 func (c *TerceroController) ConsultarDatosFamiliar() {
+	defer errorhandler.HandlePanic(&c.Controller)
+
 	resultado := make(map[string]interface{})
 	var terceros []map[string]interface{}
 	var correos []map[string]interface{}
@@ -2531,9 +2446,7 @@ func (c *TerceroController) ConsultarDatosFamiliar() {
 	var direcciones []map[string]interface{}
 	//Id de la persona
 	idStr := c.Ctx.Input.Param(":tercero_id")
-	var alerta models.Alert
 	var errorGetAll bool
-	alertas := []interface{}{"Data:"}
 
 	errTercero := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"tercero_familiar/?query=TerceroId__Id:"+idStr+"&sortby=Id&order=asc&limit=0", &terceros)
 	if errTercero == nil {
@@ -2611,141 +2524,103 @@ func (c *TerceroController) ConsultarDatosFamiliar() {
 																					}
 																				} else {
 																					errorGetAll = true
-																					alertas = append(alertas, "No data found")
-																					alerta.Code = "404"
-																					alerta.Type = "error"
-																					alerta.Body = alertas
-																					c.Data["json"] = map[string]interface{}{"Response": alerta}
+																					c.Ctx.Output.SetStatus(404)
+																					c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 																				}
 																			} else {
 																				errorGetAll = true
-																				alertas = append(alertas, errDireccion.Error())
-																				alerta.Code = "400"
-																				alerta.Type = "error"
-																				alerta.Body = alertas
-																				c.Data["json"] = map[string]interface{}{"Response": alerta}
+																				log.Error(errDireccion.Error())
+																				c.Ctx.Output.SetStatus(400)
+																				c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 																			}
 																		}
 																	} else {
 																		errorGetAll = true
-																		alertas = append(alertas, "No data found")
-																		alerta.Code = "404"
-																		alerta.Type = "error"
-																		alerta.Body = alertas
-																		c.Data["json"] = map[string]interface{}{"Response": alerta}
+																		c.Ctx.Output.SetStatus(404)
+																		c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 																	}
 																} else {
 																	errorGetAll = true
-																	alertas = append(alertas, errDireccion.Error())
-																	alerta.Code = "400"
-																	alerta.Type = "error"
-																	alerta.Body = alertas
-																	c.Data["json"] = map[string]interface{}{"Response": alerta}
+																	log.Error(errDireccion.Error())
+																	c.Ctx.Output.SetStatus(400)
+																	c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 																}
 															}
 														} else {
 															errorGetAll = true
-															alertas = append(alertas, "No data found")
-															alerta.Code = "404"
-															alerta.Type = "error"
-															alerta.Body = alertas
-															c.Data["json"] = map[string]interface{}{"Response": alerta}
+															c.Ctx.Output.SetStatus(404)
+															c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 														}
 													} else {
 														errorGetAll = true
-														alertas = append(alertas, errTelefono.Error())
-														alerta.Code = "400"
-														alerta.Type = "error"
-														alerta.Body = alertas
-														c.Data["json"] = map[string]interface{}{"Response": alerta}
+														log.Error(errTelefono.Error())
+														c.Ctx.Output.SetStatus(400)
+														c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 													}
 												}
 											} else {
 												errorGetAll = true
-												alertas = append(alertas, "No data found")
-												alerta.Code = "404"
-												alerta.Type = "error"
-												alerta.Body = alertas
-												c.Data["json"] = map[string]interface{}{"Response": alerta}
+												c.Ctx.Output.SetStatus(404)
+												c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 											}
 										} else {
 											errorGetAll = true
-											alertas = append(alertas, errTelefono.Error())
-											alerta.Code = "400"
-											alerta.Type = "error"
-											alerta.Body = alertas
-											c.Data["json"] = map[string]interface{}{"Response": alerta}
+											log.Error(errTelefono.Error())
+											c.Ctx.Output.SetStatus(400)
+											c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 										}
 									}
 								} else {
 									errorGetAll = true
-									alertas = append(alertas, "No data found")
-									alerta.Code = "404"
-									alerta.Type = "error"
-									alerta.Body = alertas
-									c.Data["json"] = map[string]interface{}{"Response": alerta}
+									c.Ctx.Output.SetStatus(404)
+									c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 								}
 							} else {
 								errorGetAll = true
-								alertas = append(alertas, errCorreo.Error())
-								alerta.Code = "400"
-								alerta.Type = "error"
-								alerta.Body = alertas
-								c.Data["json"] = map[string]interface{}{"Response": alerta}
+								log.Error(errCorreo.Error())
+								c.Ctx.Output.SetStatus(400)
+								c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 							}
 						}
 					} else {
 						errorGetAll = true
-						alertas = append(alertas, "No data found")
-						alerta.Code = "404"
-						alerta.Type = "error"
-						alerta.Body = alertas
-						c.Data["json"] = map[string]interface{}{"Response": alerta}
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					}
 				} else {
 					errorGetAll = true
-					alertas = append(alertas, errCorreo.Error())
-					alerta.Code = "400"
-					alerta.Type = "error"
-					alerta.Body = alertas
-					c.Data["json"] = map[string]interface{}{"Response": alerta}
+					log.Error(errCorreo.Error())
+					c.Ctx.Output.SetStatus(400)
+					c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 				}
 			} else {
 				errorGetAll = true
-				alertas = append(alertas, "No data found")
-				alerta.Code = "404"
-				alerta.Type = "error"
-				alerta.Body = alertas
-				c.Data["json"] = map[string]interface{}{"Response": alerta}
+				c.Ctx.Output.SetStatus(404)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 			}
 		} else {
 			errorGetAll = true
-			alertas = append(alertas, "No data found")
-			alerta.Code = "404"
-			alerta.Type = "error"
-			alerta.Body = alertas
-			c.Data["json"] = map[string]interface{}{"Response": alerta}
+			c.Ctx.Output.SetStatus(404)
+			c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 		}
 	} else {
-		if errTercero != nil {
-			alertas = append(alertas, errTercero)
-		}
-		if len(terceros) == 0 {
-			alertas = append(alertas, []interface{}{"No existen familiares asociados a esta persona"})
+		switch {
+		case errTercero != nil:
+			c.Ctx.Output.SetStatus(404)
+			c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
+		case len(terceros) == 0:
+			c.Ctx.Output.SetStatus(404)
+			c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil, "No existen familiares asociados a esta persona")
+		default:
+			c.Ctx.Output.SetStatus(400)
+			c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 		}
 		errorGetAll = true
-		alerta.Type = "error"
-		alerta.Code = "400"
-		alerta.Body = alertas
-		c.Data["json"] = map[string]interface{}{"Response": alerta}
 	}
 
 	if !errorGetAll {
-		alertas = append(alertas, resultado)
-		alerta.Code = "200"
-		alerta.Type = "OK"
-		alerta.Body = alertas
-		c.Data["json"] = map[string]interface{}{"Response": alerta}
+		c.Ctx.Output.SetStatus(200)
+		c.Data["json"] = requestresponse.APIResponseDTO(true, 200, resultado)
 	}
 
 	c.ServeJSON()
@@ -2757,8 +2632,10 @@ func (c *TerceroController) ConsultarDatosFamiliar() {
 // @Param	tercero_id	path	int	true	"Id del Tercero"
 // @Success 200 {}
 // @Failure 404 not found resource
-// @router /consultar_formacion_pregrado/:tercero_id [get]
+// @router /:tercero_id/formacion-pregrado [get]
 func (c *TerceroController) ConsultarDatosFormacionPregrado() {
+	defer errorhandler.HandlePanic(&c.Controller)
+
 	//Id de la persona
 	idStr := c.Ctx.Input.Param(":tercero_id")
 	// resultado datos complementarios persona
@@ -2766,9 +2643,7 @@ func (c *TerceroController) ConsultarDatosFormacionPregrado() {
 	var personaInscrita []map[string]interface{}
 	var IdColegioGet float64
 	resultado = make(map[string]interface{})
-	var alerta models.Alert
 	var errorGetAll bool
-	alertas := append([]interface{}{"Response:"})
 
 	errPersona := request.GetJson("http://"+beego.AppConfig.String("InscripcionService")+"/inscripcion_pregrado?query=Activo:true,InscripcionId.PersonaId:"+idStr, &personaInscrita)
 	if errPersona == nil {
@@ -2809,19 +2684,14 @@ func (c *TerceroController) ConsultarDatosFormacionPregrado() {
 												}
 											} else {
 												errorGetAll = true
-												alertas = append(alertas, direccionColegio)
-												alerta.Code = "404"
-												alerta.Type = "error"
-												alerta.Body = alertas
-												c.Data["json"] = map[string]interface{}{"Response": alerta}
+												c.Ctx.Output.SetStatus(404)
+												c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 											}
 										} else {
 											errorGetAll = true
-											alertas = append(alertas, errLugarColegio)
-											alerta.Code = "404"
-											alerta.Type = "error"
-											alerta.Body = alertas
-											c.Data["json"] = map[string]interface{}{"Response": alerta}
+											log.Error(errLugarColegio)
+											c.Ctx.Output.SetStatus(404)
+											c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 										}
 
 										//cargar id Lugar colegio
@@ -2860,68 +2730,58 @@ func (c *TerceroController) ConsultarDatosFormacionPregrado() {
 															if colegio[0]["Status"] != 404 {
 																resultado["TipoColegio"] = colegio[0]["TipoTerceroId"].(map[string]interface{})["Id"]
 																resultado["Colegio"] = colegio[0]["TerceroId"]
-																c.Data["json"] = resultado
+																c.Ctx.Output.SetStatus(200)
+																c.Data["json"] = requestresponse.APIResponseDTO(true, 200, resultado)
 
 															} else {
 																if colegio[0]["Message"] == "Not found resource" {
-																	c.Data["json"] = nil
+																	c.Ctx.Output.SetStatus(404)
+																	c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 																} else {
 																	errorGetAll = true
-																	alertas = append(alertas, colegio)
-																	alerta.Code = "404"
-																	alerta.Type = "error"
-																	alerta.Body = alertas
-																	c.Data["json"] = map[string]interface{}{"Response": alerta}
+																	log.Error(colegio)
+																	c.Ctx.Output.SetStatus(404)
+																	c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 																}
 															}
 														} else {
 															errorGetAll = true
-															alertas = append(alertas, errcolegio)
-															alerta.Code = "404"
-															alerta.Type = "error"
-															alerta.Body = alertas
-															c.Data["json"] = map[string]interface{}{"Response": alerta}
+															log.Error(errcolegio)
+															c.Ctx.Output.SetStatus(404)
+															c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 														}
 													} else {
 														if lugar["Message"] == "Not found resource" {
-															c.Data["json"] = nil
+															c.Ctx.Output.SetStatus(404)
+															c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 														} else {
 															errorGetAll = true
-															alertas = append(alertas, lugar)
-															alerta.Code = "404"
-															alerta.Type = "error"
-															alerta.Body = alertas
-															c.Data["json"] = map[string]interface{}{"Response": alerta}
+															log.Error(lugar)
+															c.Ctx.Output.SetStatus(404)
+															c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 														}
 													}
 												} else {
 													errorGetAll = true
-													alertas = append(alertas, errLugar)
-													alerta.Code = "404"
-													alerta.Type = "error"
-													alerta.Body = alertas
-													c.Data["json"] = map[string]interface{}{"Response": alerta}
+													log.Error(errLugar)
+													c.Ctx.Output.SetStatus(404)
+													c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 												}
 
 											} else {
 												if IdLugarColegio[0]["Message"] == "Not found resource" {
-													c.Data["json"] = nil
+													c.Ctx.Output.SetStatus(404)
+													c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 												} else {
 													errorGetAll = true
-													alertas = append(alertas, IdLugarColegio)
-													alerta.Code = "404"
-													alerta.Type = "error"
-													alerta.Body = alertas
-													c.Data["json"] = map[string]interface{}{"Response": alerta}
+													c.Ctx.Output.SetStatus(404)
+													c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 												}
 											}
 										} else {
 											errorGetAll = true
-											alertas = append(alertas, errIdLugarColegio)
-											alerta.Code = "404"
-											alerta.Type = "error"
-											alerta.Body = alertas
-											c.Data["json"] = map[string]interface{}{"Response": alerta}
+											c.Ctx.Output.SetStatus(404)
+											c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 										}
 
 										break
@@ -2931,68 +2791,54 @@ func (c *TerceroController) ConsultarDatosFormacionPregrado() {
 
 						} else {
 							if IdColegio[0]["Message"] == "Not found resource" {
-								c.Data["json"] = nil
+								c.Ctx.Output.SetStatus(404)
+								c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 							} else {
 								errorGetAll = true
-								alertas = append(alertas, IdColegio)
-								alerta.Code = "404"
-								alerta.Type = "error"
-								alerta.Body = alertas
-								c.Data["json"] = map[string]interface{}{"Response": alerta}
+								c.Ctx.Output.SetStatus(404)
+								c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 							}
 						}
 					} else {
 						errorGetAll = true
-						alertas = append(alertas, errIdColegio)
-						alerta.Code = "404"
-						alerta.Type = "error"
-						alerta.Body = alertas
-						c.Data["json"] = map[string]interface{}{"Response": alerta}
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					}
 				} else {
 					if NumeroSemestre[0]["Message"] == "Not found resource" {
-						c.Data["json"] = nil
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					} else {
 						errorGetAll = true
-						alertas = append(alertas, NumeroSemestre)
-						alerta.Code = "404"
-						alerta.Type = "error"
-						alerta.Body = alertas
-						c.Data["json"] = map[string]interface{}{"Response": alerta}
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					}
 				}
 			} else {
 				errorGetAll = true
-				alertas = append(alertas, errNumeroSemestre)
-				alerta.Code = "404"
-				alerta.Type = "error"
-				alerta.Body = alertas
-				c.Data["json"] = map[string]interface{}{"Response": alerta}
+				c.Ctx.Output.SetStatus(404)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 			}
 
 		} else {
 			if personaInscrita[0]["Message"] == "Not found resource" {
-				c.Data["json"] = nil
+				c.Ctx.Output.SetStatus(404)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 			} else {
 				errorGetAll = true
-				alertas = append(alertas, personaInscrita)
-				alerta.Code = "404"
-				alerta.Type = "error"
-				alerta.Body = alertas
-				c.Data["json"] = map[string]interface{}{"Response": alerta}
+				c.Ctx.Output.SetStatus(404)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 			}
 		}
 	} else {
 		errorGetAll = true
-		alertas = append(alertas, errPersona)
-		alerta.Code = "404"
-		alerta.Type = "error"
-		alerta.Body = alertas
-		c.Data["json"] = map[string]interface{}{"Response": alerta}
+		c.Ctx.Output.SetStatus(404)
+		c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 	}
 
 	if !errorGetAll {
-		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Request successful", "Data": resultado}
+		c.Ctx.Output.SetStatus(200)
+		c.Data["json"] = requestresponse.APIResponseDTO(true, 200, resultado)
 	}
 
 	c.ServeJSON()
@@ -3004,8 +2850,10 @@ func (c *TerceroController) ConsultarDatosFormacionPregrado() {
 // @Param	body	body 	{}	true		"body for Actualizar la info familiar del tercero content"
 // @Success 200 {}
 // @Failure 403 body is empty
-// @router /info_familiar [put]
+// @router /info-familiar [put]
 func (c *TerceroController) ActualizarInfoFamiliar() {
+	defer errorhandler.HandlePanic(&c.Controller)
+
 	var InfoFamiliar map[string]interface{}
 	var Familiares []map[string]interface{}
 	var ParentescoPut map[string]interface{}
@@ -3016,9 +2864,7 @@ func (c *TerceroController) ActualizarInfoFamiliar() {
 	var Direccion []map[string]interface{}
 	var DireccionPut map[string]interface{}
 	resultado := make(map[string]interface{})
-	var alerta models.Alert
 	var errorGetAll bool
-	alertas := []interface{}{"Data:"}
 
 	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &InfoFamiliar); err == nil {
 		Familiar := InfoFamiliar["Familiares"].([]interface{})
@@ -3058,35 +2904,23 @@ func (c *TerceroController) ActualizarInfoFamiliar() {
 								}
 							} else {
 								errorGetAll = true
-								alertas = append(alertas, "No data found")
-								alerta.Code = "404"
-								alerta.Type = "error"
-								alerta.Body = alertas
-								c.Data["json"] = map[string]interface{}{"Response": alerta}
+								c.Ctx.Output.SetStatus(404)
+								c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 							}
 						} else {
 							errorGetAll = true
-							alertas = append(alertas, errParentesco.Error())
-							alerta.Code = "400"
-							alerta.Type = "error"
-							alerta.Body = alertas
-							c.Data["json"] = map[string]interface{}{"Response": alerta}
+							c.Ctx.Output.SetStatus(400)
+							c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 						}
 					} else {
 						errorGetAll = true
-						alertas = append(alertas, "No data found")
-						alerta.Code = "404"
-						alerta.Type = "error"
-						alerta.Body = alertas
-						c.Data["json"] = map[string]interface{}{"Response": alerta}
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					}
 				} else {
 					errorGetAll = true
-					alertas = append(alertas, errParentesco.Error())
-					alerta.Code = "400"
-					alerta.Type = "error"
-					alerta.Body = alertas
-					c.Data["json"] = map[string]interface{}{"Response": alerta}
+					c.Ctx.Output.SetStatus(400)
+					c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 				}
 
 				//PUT Telefono (Info complementaria 51)
@@ -3110,67 +2944,43 @@ func (c *TerceroController) ActualizarInfoFamiliar() {
 												resultado["TelefonoAlterno"] = TelefonoPut["Dato"]
 											} else {
 												errorGetAll = true
-												alertas = append(alertas, "No data found")
-												alerta.Code = "404"
-												alerta.Type = "error"
-												alerta.Body = alertas
-												c.Data["json"] = map[string]interface{}{"Response": alerta}
+												c.Ctx.Output.SetStatus(404)
+												c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 											}
 										} else {
 											errorGetAll = true
-											alertas = append(alertas, errTelefono.Error())
-											alerta.Code = "400"
-											alerta.Type = "error"
-											alerta.Body = alertas
-											c.Data["json"] = map[string]interface{}{"Response": alerta}
+											c.Ctx.Output.SetStatus(400)
+											c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 										}
 									} else {
 										errorGetAll = true
-										alertas = append(alertas, "No data found")
-										alerta.Code = "404"
-										alerta.Type = "error"
-										alerta.Body = alertas
-										c.Data["json"] = map[string]interface{}{"Response": alerta}
+										c.Ctx.Output.SetStatus(404)
+										c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 									}
 								} else {
 									errorGetAll = true
-									alertas = append(alertas, errTelefono.Error())
-									alerta.Code = "400"
-									alerta.Type = "error"
-									alerta.Body = alertas
-									c.Data["json"] = map[string]interface{}{"Response": alerta}
+									c.Ctx.Output.SetStatus(400)
+									c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 								}
 							} else {
 								errorGetAll = true
-								alertas = append(alertas, "No data found")
-								alerta.Code = "404"
-								alerta.Type = "error"
-								alerta.Body = alertas
-								c.Data["json"] = map[string]interface{}{"Response": alerta}
+								c.Ctx.Output.SetStatus(404)
+								c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 							}
 						} else {
 							errorGetAll = true
-							alertas = append(alertas, errTelefono.Error())
-							alerta.Code = "400"
-							alerta.Type = "error"
-							alerta.Body = alertas
-							c.Data["json"] = map[string]interface{}{"Response": alerta}
+							c.Ctx.Output.SetStatus(400)
+							c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 						}
 					} else {
 						errorGetAll = true
-						alertas = append(alertas, "No data found")
-						alerta.Code = "404"
-						alerta.Type = "error"
-						alerta.Body = alertas
-						c.Data["json"] = map[string]interface{}{"Response": alerta}
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					}
 				} else {
 					errorGetAll = true
-					alertas = append(alertas, errParentesco.Error())
-					alerta.Code = "400"
-					alerta.Type = "error"
-					alerta.Body = alertas
-					c.Data["json"] = map[string]interface{}{"Response": alerta}
+					c.Ctx.Output.SetStatus(400)
+					c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 				}
 
 				//PUT Correo (Info complementaria 53)
@@ -3194,67 +3004,43 @@ func (c *TerceroController) ActualizarInfoFamiliar() {
 												resultado["CorreoAlterno"] = CorreoPut["Dato"]
 											} else {
 												errorGetAll = true
-												alertas = append(alertas, "No data found")
-												alerta.Code = "404"
-												alerta.Type = "error"
-												alerta.Body = alertas
-												c.Data["json"] = map[string]interface{}{"Response": alerta}
+												c.Ctx.Output.SetStatus(404)
+												c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 											}
 										} else {
 											errorGetAll = true
-											alertas = append(alertas, errCorreo.Error())
-											alerta.Code = "400"
-											alerta.Type = "error"
-											alerta.Body = alertas
-											c.Data["json"] = map[string]interface{}{"Response": alerta}
+											c.Ctx.Output.SetStatus(400)
+											c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 										}
 									} else {
 										errorGetAll = true
-										alertas = append(alertas, "No data found")
-										alerta.Code = "404"
-										alerta.Type = "error"
-										alerta.Body = alertas
-										c.Data["json"] = map[string]interface{}{"Response": alerta}
+										c.Ctx.Output.SetStatus(404)
+										c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 									}
 								} else {
 									errorGetAll = true
-									alertas = append(alertas, errCorreo.Error())
-									alerta.Code = "400"
-									alerta.Type = "error"
-									alerta.Body = alertas
-									c.Data["json"] = map[string]interface{}{"Response": alerta}
+									c.Ctx.Output.SetStatus(400)
+									c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 								}
 							} else {
 								errorGetAll = true
-								alertas = append(alertas, "No data found")
-								alerta.Code = "404"
-								alerta.Type = "error"
-								alerta.Body = alertas
-								c.Data["json"] = map[string]interface{}{"Response": alerta}
+								c.Ctx.Output.SetStatus(404)
+								c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 							}
 						} else {
 							errorGetAll = true
-							alertas = append(alertas, errCorreo.Error())
-							alerta.Code = "400"
-							alerta.Type = "error"
-							alerta.Body = alertas
-							c.Data["json"] = map[string]interface{}{"Response": alerta}
+							c.Ctx.Output.SetStatus(400)
+							c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 						}
 					} else {
 						errorGetAll = true
-						alertas = append(alertas, "No data found")
-						alerta.Code = "404"
-						alerta.Type = "error"
-						alerta.Body = alertas
-						c.Data["json"] = map[string]interface{}{"Response": alerta}
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					}
 				} else {
 					errorGetAll = true
-					alertas = append(alertas, errCorreo.Error())
-					alerta.Code = "400"
-					alerta.Type = "error"
-					alerta.Body = alertas
-					c.Data["json"] = map[string]interface{}{"Response": alerta}
+					c.Ctx.Output.SetStatus(400)
+					c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 				}
 
 				// PUT Direccion (Info complementaria 54)
@@ -3278,100 +3064,64 @@ func (c *TerceroController) ActualizarInfoFamiliar() {
 												resultado["DireccionAlterno"] = DireccionPut["Dato"]
 											} else {
 												errorGetAll = true
-												alertas = append(alertas, "No data found")
-												alerta.Code = "404"
-												alerta.Type = "error"
-												alerta.Body = alertas
-												c.Data["json"] = map[string]interface{}{"Response": alerta}
+												c.Ctx.Output.SetStatus(404)
+												c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 											}
 										} else {
 											errorGetAll = true
-											alertas = append(alertas, errDireccion.Error())
-											alerta.Code = "400"
-											alerta.Type = "error"
-											alerta.Body = alertas
-											c.Data["json"] = map[string]interface{}{"Response": alerta}
+											c.Ctx.Output.SetStatus(400)
+											c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 										}
 									} else {
 										errorGetAll = true
-										alertas = append(alertas, "No data found")
-										alerta.Code = "404"
-										alerta.Type = "error"
-										alerta.Body = alertas
-										c.Data["json"] = map[string]interface{}{"Response": alerta}
+										c.Ctx.Output.SetStatus(404)
+										c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 									}
 								} else {
 									errorGetAll = true
-									alertas = append(alertas, errDireccion.Error())
-									alerta.Code = "400"
-									alerta.Type = "error"
-									alerta.Body = alertas
-									c.Data["json"] = map[string]interface{}{"Response": alerta}
+									c.Ctx.Output.SetStatus(400)
+									c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 								}
 							} else {
 								errorGetAll = true
-								alertas = append(alertas, "No data found")
-								alerta.Code = "404"
-								alerta.Type = "error"
-								alerta.Body = alertas
-								c.Data["json"] = map[string]interface{}{"Response": alerta}
+								c.Ctx.Output.SetStatus(404)
+								c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 							}
 						} else {
 							errorGetAll = true
-							alertas = append(alertas, errDireccion.Error())
-							alerta.Code = "400"
-							alerta.Type = "error"
-							alerta.Body = alertas
-							c.Data["json"] = map[string]interface{}{"Response": alerta}
+							c.Ctx.Output.SetStatus(400)
+							c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 						}
 					} else {
 						errorGetAll = true
-						alertas = append(alertas, "No data found")
-						alerta.Code = "404"
-						alerta.Type = "error"
-						alerta.Body = alertas
-						c.Data["json"] = map[string]interface{}{"Response": alerta}
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					}
 				} else {
 					errorGetAll = true
-					alertas = append(alertas, errDireccion.Error())
-					alerta.Code = "400"
-					alerta.Type = "error"
-					alerta.Body = alertas
-					c.Data["json"] = map[string]interface{}{"Response": alerta}
+					c.Ctx.Output.SetStatus(400)
+					c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 				}
 
 			} else {
 				errorGetAll = true
-				alertas = append(alertas, "No data found")
-				alerta.Code = "404"
-				alerta.Type = "error"
-				alerta.Body = alertas
-				c.Data["json"] = map[string]interface{}{"Response": alerta}
+				c.Ctx.Output.SetStatus(404)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 			}
 		} else {
 			errorGetAll = true
-			alertas = append(alertas, errFamiliares.Error())
-			alerta.Code = "400"
-			alerta.Type = "error"
-			alerta.Body = alertas
-			c.Data["json"] = map[string]interface{}{"Response": alerta}
+			c.Ctx.Output.SetStatus(400)
+			c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 		}
 	} else {
 		errorGetAll = true
-		alertas = append(alertas, err.Error())
-		alerta.Code = "400"
-		alerta.Type = "error"
-		alerta.Body = alertas
-		c.Data["json"] = map[string]interface{}{"Response": alerta}
+		c.Ctx.Output.SetStatus(400)
+		c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 	}
 
 	if !errorGetAll {
-		alertas = append(alertas, resultado)
-		alerta.Code = "200"
-		alerta.Type = "OK"
-		alerta.Body = alertas
-		c.Data["json"] = map[string]interface{}{"Response": alerta}
+		c.Ctx.Output.SetStatus(200)
+		c.Data["json"] = requestresponse.APIResponseDTO(true, 200, resultado)
 	}
 
 	c.ServeJSON()
@@ -3383,13 +3133,13 @@ func (c *TerceroController) ActualizarInfoFamiliar() {
 // @Param	tercero_id	path	int	true	"Id del tercero"
 // @Success 200 {}
 // @Failure 404 not found resource
-// @router /consultar_info_solicitante/:tercero_id [get]
+// @router /:tercero_id/info-solicitante [get]
 func (c *TerceroController) ConsultarInfoEstudiante() {
+	defer errorhandler.HandlePanic(&c.Controller)
+
 	idStr := c.Ctx.Input.Param(":tercero_id")
 	resultado := make(map[string]interface{})
 	var persona []map[string]interface{}
-	var alerta models.Alert
-	alertas := []interface{}{}
 	var errorGetAll bool
 
 	errPersona := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"tercero?query=Id:"+idStr, &persona)
@@ -3419,21 +3169,16 @@ func (c *TerceroController) ConsultarInfoEstudiante() {
 					resultado["CorreoPersonal"] = jsondata["Data"]
 				} else {
 					if correoPersonal[0]["Message"] == "Not found resource" {
-						c.Data["json"] = nil
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					} else {
-						alertas = append(alertas, "No data found")
-						alerta.Code = "404"
-						alerta.Type = "error"
-
-						c.Data["json"] = map[string]interface{}{"Response": alerta}
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					}
 				}
 			} else {
-				alertas = append(alertas, "No data found")
-				alerta.Code = "400"
-				alerta.Type = "error"
-
-				c.Data["json"] = map[string]interface{}{"Response": alerta}
+				c.Ctx.Output.SetStatus(400)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 			}
 
 			errPrograma := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+fmt.Sprintf("%v", persona[0]["Id"])+",InfoComplementariaId__Id:95", &programa)
@@ -3453,21 +3198,16 @@ func (c *TerceroController) ConsultarInfoEstudiante() {
 					}
 				} else {
 					if programa[0]["Message"] == "Not found resource" {
-						c.Data["json"] = nil
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					} else {
-						alertas = append(alertas, "No data found")
-						alerta.Code = "404"
-						alerta.Type = "error"
-
-						c.Data["json"] = map[string]interface{}{"Response": alerta}
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					}
 				}
 			} else {
-				alertas = append(alertas, "No data found")
-				alerta.Code = "400"
-				alerta.Type = "error"
-
-				c.Data["json"] = map[string]interface{}{"Response": alerta}
+				c.Ctx.Output.SetStatus(400)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 			}
 
 			errTelefono := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+fmt.Sprintf("%v", persona[0]["Id"])+",InfoComplementariaId__Id:51", &telefono)
@@ -3482,20 +3222,16 @@ func (c *TerceroController) ConsultarInfoEstudiante() {
 					}
 				} else {
 					if telefono[0]["Message"] == "Not found resource" {
-						c.Data["json"] = nil
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil, "Not found resource")
 					} else {
-						alertas = append(alertas, "No data found")
-						alerta.Code = "404"
-						alerta.Type = "error"
-
-						c.Data["json"] = map[string]interface{}{"Response": alerta}
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					}
 				}
 			} else {
-				alertas = append(alertas, "No data found")
-				alerta.Code = "400"
-				alerta.Type = "error"
-				c.Data["json"] = map[string]interface{}{"Response": alerta}
+				c.Ctx.Output.SetStatus(400)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 			}
 
 			errCodigoEst := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+fmt.Sprintf("%v", persona[0]["Id"])+",InfoComplementariaId__Id:93", &codigo)
@@ -3504,19 +3240,16 @@ func (c *TerceroController) ConsultarInfoEstudiante() {
 					resultado["Codigo"] = codigo[0]["Dato"]
 				} else {
 					if codigo[0]["Message"] == "Not found resource" {
-						c.Data["json"] = nil
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					} else {
-						alertas = append(alertas, "No data found")
-						alerta.Code = "404"
-						alerta.Type = "error"
-						c.Data["json"] = map[string]interface{}{"Response": alerta}
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					}
 				}
 			} else {
-				alertas = append(alertas, "No data found")
-				alerta.Code = "400"
-				alerta.Type = "error"
-				c.Data["json"] = map[string]interface{}{"Response": alerta}
+				c.Ctx.Output.SetStatus(400)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil)
 			}
 
 			errCorreoIns := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+fmt.Sprintf("%v", persona[0]["Id"])+",InfoComplementariaId__Id:94", &correoInstitucional)
@@ -3530,43 +3263,38 @@ func (c *TerceroController) ConsultarInfoEstudiante() {
 					resultado["CorreoInstitucional"] = jsondata["value"]
 				} else {
 					if correoInstitucional[0]["Message"] == "Not found resource" {
-						c.Data["json"] = nil
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					} else {
-						alertas = append(alertas, "No data found")
-						alerta.Code = "404"
-						alerta.Type = "error"
-						alerta.Body = alertas
-						c.Data["json"] = map[string]interface{}{"Response": alerta}
+						c.Ctx.Output.SetStatus(404)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 					}
 				}
 			} else {
-				alertas = append(alertas, "No data found")
-				alerta.Code = "400"
-				alerta.Type = "error"
-				alerta.Body = alertas
-				c.Data["json"] = map[string]interface{}{"Response": alerta}
+				c.Ctx.Output.SetStatus(404)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 			}
-
-			c.Data["json"] = resultado
+			c.Ctx.Output.SetStatus(200)
+			c.Data["json"] = requestresponse.APIResponseDTO(true, 200, resultado)
 		} else {
 			if persona[0]["Message"] == "Not found resource" {
-				c.Data["json"] = nil
+				c.Ctx.Output.SetStatus(404)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 			} else {
-				alertas = append(alertas, "No data found")
-				alerta.Code = "404"
-				alerta.Type = "error"
-				alerta.Body = alertas
-				c.Data["json"] = map[string]interface{}{"Response": alerta}
+				c.Ctx.Output.SetStatus(404)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 			}
 		}
 	} else {
-		logs.Error(errPersona)
+		logs.Error("Error --> ", errPersona)
 		errorGetAll = true
-		c.Data["json"] = map[string]interface{}{"Success": false, "Status": "404", "Message": "Data not found", "Data": nil}
+		c.Ctx.Output.SetStatus(404)
+		c.Data["json"] = requestresponse.APIResponseDTO(false, 404, nil)
 	}
 
 	if !errorGetAll {
-		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Request successful", "Data": resultado}
+		c.Ctx.Output.SetStatus(200)
+		c.Data["json"] = requestresponse.APIResponseDTO(true, 200, resultado)
 	}
 
 	c.ServeJSON()
@@ -3578,8 +3306,9 @@ func (c *TerceroController) ConsultarInfoEstudiante() {
 // @Param	body		body 	{}	true		"body for Guardar autor content"
 // @Success 201 {int}
 // @Failure 400 the request contains incorrect syntax
-// @router /guardar_autor [post]
+// @router /autores [post]
 func (c *TerceroController) GuardarAutor() {
+	defer errorhandler.HandlePanic(&c.Controller)
 
 	//resultado solicitud de descuento
 	var resultado map[string]interface{}
@@ -3616,35 +3345,36 @@ func (c *TerceroController) GuardarAutor() {
 
 						resultado["NumeroIdentificacion"] = identificacion["Numero"]
 						resultado["TipoIdentificacionId"] = identificacion["TipoDocumentoId"].(map[string]interface{})["Id"]
-						c.Data["json"] = resultado
+						c.Ctx.Output.SetStatus(200)
+						c.Data["json"] = requestresponse.APIResponseDTO(true, 200, resultado)
 
 					} else {
 						//Si pasa un error borra todo lo creado al momento del registro del documento de identidad
 						var resultado2 map[string]interface{}
 						request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"tercero/%.f", terceroPost["Id"]), "DELETE", &resultado2, nil)
-						logs.Error(errIdentificacion)
-						c.Data["system"] = identificacion
-						c.Abort("400")
+						logs.Error("Error --> ", errIdentificacion)
+						c.Ctx.Output.SetStatus(400)
+						c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil, errIdentificacion.Error())
 					}
 				} else {
-					logs.Error(errIdentificacion)
-					c.Data["system"] = identificacion
-					c.Abort("400")
+					logs.Error("Error --> ", errIdentificacion)
+					c.Ctx.Output.SetStatus(400)
+					c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil, errIdentificacion.Error())
 				}
 			} else {
-				logs.Error(errPersona)
-				c.Data["system"] = terceroPost
-				c.Abort("400")
+				logs.Error("Error --> ", errPersona)
+				c.Ctx.Output.SetStatus(400)
+				c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil, errPersona.Error())
 			}
 		} else {
-			logs.Error(errPersona)
-			c.Data["system"] = terceroPost
-			c.Abort("400")
+			logs.Error("Error --> ", errPersona)
+			c.Ctx.Output.SetStatus(400)
+			c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil, errPersona.Error())
 		}
 	} else {
-		logs.Error(err)
-		c.Data["system"] = err
-		c.Abort("400")
+		logs.Error("Error --> ", err)
+		c.Ctx.Output.SetStatus(400)
+		c.Data["json"] = requestresponse.APIResponseDTO(false, 400, nil, err.Error())
 	}
 	c.ServeJSON()
 }
@@ -3657,8 +3387,10 @@ func (c *TerceroController) GuardarAutor() {
 // Este label es una combinación del NIT y el nombre, dependiendo del tipo de búsqueda realizada.
 // @Title ObtenerTerceroConNIT
 // @Description Retorna una lista de terceros con su NIT y nombre completo.
-//                La búsqueda puede realizarse por NIT o por nombre completo.
-//                El resultado incluye un label que es una combinación de NIT y nombre, dependiendo del criterio de búsqueda.
+//
+//	La búsqueda puede realizarse por NIT o por nombre completo.
+//	El resultado incluye un label que es una combinación de NIT y nombre, dependiendo del criterio de búsqueda.
+//
 // @Success 200 {array} TerceroConNIT "Lista de terceros con NIT, nombre completo y label correspondiente."
 // @Failure 400 "bad request" en caso de una solicitud incorrecta o problemas en la consulta.
 // @router /consultar_terceros_con_nit [get]
@@ -3681,11 +3413,11 @@ func (c *TerceroController) ObtenerTercerosConNIT() {
 	} else {
 		queryUrl = "datos_identificacion?query=TipoDocumentoId:7&limit=0"
 	}
-	
+
 	var tercerosConNIT []map[string]interface{}
 	//Consultar terceros con nit
-	errTerceroConNIT := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+ queryUrl, &tercerosConNIT)
-	if errTerceroConNIT == nil{
+	errTerceroConNIT := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+queryUrl, &tercerosConNIT)
+	if errTerceroConNIT == nil {
 		if tercerosConNIT != nil && len(tercerosConNIT) > 0 {
 			type TerceroConNIT struct {
 				NIT            string `json:"NIT"`
@@ -3701,7 +3433,7 @@ func (c *TerceroController) ObtenerTercerosConNIT() {
 					} else {
 						label = terceroData["NombreCompleto"].(string) + " - " + tercero["Numero"].(string)
 					}
-		
+
 					terceroConNIT := TerceroConNIT{
 						NombreCompleto: terceroData["NombreCompleto"].(string),
 						NIT:            tercero["Numero"].(string),
@@ -3711,8 +3443,8 @@ func (c *TerceroController) ObtenerTercerosConNIT() {
 				}
 			}
 			c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Request successful", "Data": resultado}
-		}		
-	}else {
+		}
+	} else {
 		logs.Error(errTerceroConNIT)
 		c.Data["json"] = map[string]interface{}{"Success": false, "Status": "404", "Message": "Data not found", "Data": nil}
 		c.Data["system"] = errTerceroConNIT
