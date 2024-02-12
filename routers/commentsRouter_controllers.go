@@ -117,6 +117,15 @@ func init() {
 
     beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"],
         beego.ControllerComments{
+            Method: "ObtenerTercerosConNIT",
+            Router: "/consultar_terceros_con_nit",
+            AllowHTTPMethods: []string{"get"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"],
+        beego.ControllerComments{
             Method: "GuardarDatosContacto",
             Router: "/contacto",
             AllowHTTPMethods: []string{"post"},

@@ -1,9 +1,14 @@
 package controllers
 
 import (
+	"net/url"
+	"unicode"
+
 	"github.com/astaxie/beego"
+	"github.com/beego/beego/logs"
 	"github.com/udistrital/sga_mid_tercero/services"
 	"github.com/udistrital/utils_oas/errorhandler"
+	"github.com/udistrital/utils_oas/request"
 	"github.com/udistrital/utils_oas/requestresponse"
 )
 
@@ -29,6 +34,7 @@ func (c *TerceroController) URLMapping() {
 	c.Mapping("ConsultarInfoEstudiante", c.ConsultarInfoEstudiante)
 	c.Mapping("GuardarAutor", c.GuardarAutor)
 	c.Mapping("ConsultarExistenciaPersona", c.ConsultarExistenciaPersona)
+	c.Mapping("ObtenerTercerosConNIT", c.ObtenerTercerosConNIT)
 }
 
 // ActualizarPersona ...
@@ -408,4 +414,87 @@ func (c *TerceroController) GuardarAutor() {
 	}
 
 	c.ServeJSON()
+}
+
+// ObtenerTercerosConNIT maneja la solicitud para obtener una lista de terceros.
+// La búsqueda se puede realizar tanto por el NIT (Número de Identificación Tributaria) como por el nombre completo.
+// Si se busca por NIT, la función intenta encontrar coincidencias en los números de identificación.
+// Si se busca por nombre, intenta encontrar coincidencias en los nombres completos de los terceros.
+// La función retorna una lista de terceros, cada uno con su NIT, nombre completo, y un label.
+// Este label es una combinación del NIT y el nombre, dependiendo del tipo de búsqueda realizada.
+// @Title ObtenerTerceroConNIT
+// @Description Retorna una lista de terceros con su NIT y nombre completo.
+//
+//	La búsqueda puede realizarse por NIT o por nombre completo.
+//	El resultado incluye un label que es una combinación de NIT y nombre, dependiendo del criterio de búsqueda.
+//
+// @Success 200 {array} TerceroConNIT "Lista de terceros con NIT, nombre completo y label correspondiente."
+// @Failure 400 "bad request" en caso de una solicitud incorrecta o problemas en la consulta.
+// @router /consultar_terceros_con_nit [get]
+func (c *TerceroController) ObtenerTercerosConNIT() {
+	var query string
+	var queryUrl string
+	// order: desc,asc
+	if v := c.GetString("query"); v != "" {
+		query = url.QueryEscape(v)
+	}
+	// Se arma la query
+	if query != "" {
+		if esNumerico(query) {
+			// Búsqueda por número
+			queryUrl = "datos_identificacion?query=TipoDocumentoId:7,Numero__icontains:" + query
+		} else {
+			// Búsqueda por nombre
+			queryUrl = "datos_identificacion?query=TipoDocumentoId:7,TerceroId.NombreCompleto__icontains:" + query
+		}
+	} else {
+		queryUrl = "datos_identificacion?query=TipoDocumentoId:7&limit=0"
+	}
+
+	var tercerosConNIT []map[string]interface{}
+	//Consultar terceros con nit
+	errTerceroConNIT := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+queryUrl, &tercerosConNIT)
+	if errTerceroConNIT == nil {
+		if tercerosConNIT != nil && len(tercerosConNIT) > 0 {
+			type TerceroConNIT struct {
+				NIT            string `json:"NIT"`
+				NombreCompleto string `json:"NombreCompleto"`
+				Label          string `json:"Label"`
+			}
+			var resultado []TerceroConNIT
+			for _, tercero := range tercerosConNIT {
+				if terceroData, ok := tercero["TerceroId"].(map[string]interface{}); ok {
+					var label string
+					if esNumerico(query) {
+						label = tercero["Numero"].(string) + " - " + terceroData["NombreCompleto"].(string)
+					} else {
+						label = terceroData["NombreCompleto"].(string) + " - " + tercero["Numero"].(string)
+					}
+
+					terceroConNIT := TerceroConNIT{
+						NombreCompleto: terceroData["NombreCompleto"].(string),
+						NIT:            tercero["Numero"].(string),
+						Label:          label,
+					}
+					resultado = append(resultado, terceroConNIT)
+				}
+			}
+			c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Request successful", "Data": resultado}
+		}
+	} else {
+		logs.Error(errTerceroConNIT)
+		c.Data["json"] = map[string]interface{}{"Success": false, "Status": "404", "Message": "Data not found", "Data": nil}
+		c.Data["system"] = errTerceroConNIT
+		c.Abort("404")
+	}
+	c.ServeJSON()
+}
+
+func esNumerico(s string) bool {
+	for _, r := range s {
+		if !unicode.IsDigit(r) {
+			return false
+		}
+	}
+	return true
 }

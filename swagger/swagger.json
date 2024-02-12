@@ -179,6 +179,29 @@
                 }
             }
         },
+        "/persona/consultar_terceros_con_nit": {
+            "get": {
+                "tags": [
+                    "persona"
+                ],
+                "description": "Retorna una lista de terceros con su NIT y nombre completo.",
+                "operationId": "TerceroController.ObtenerTerceroConNIT",
+                "responses": {
+                    "200": {
+                        "description": "\"Lista de terceros con NIT, nombre completo y label correspondiente.\"",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/TerceroConNIT"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "\"bad request\" en caso de una solicitud incorrecta o problemas en la consulta."
+                    }
+                }
+            }
+        },
         "/persona/contacto": {
             "post": {
                 "tags": [
@@ -426,6 +449,10 @@
         }
     },
     "definitions": {
+        "TerceroConNIT": {
+            "title": "TerceroConNIT",
+            "type": "object"
+        },
         "{}": {
             "title": "{}",
             "type": "object"
