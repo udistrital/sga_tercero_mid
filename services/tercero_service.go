@@ -1,56 +1,26 @@
-package controllers
+package services
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"net/url"
 	"reflect"
 	"strconv"
-	"unicode"
 
 	"github.com/astaxie/beego"
-	"github.com/beego/beego/logs"
+	"github.com/astaxie/beego/logs"
+	"github.com/prometheus/common/log"
+	"github.com/udistrital/sga_mid_tercero/helpers"
 	"github.com/udistrital/sga_mid_tercero/models"
 	"github.com/udistrital/utils_oas/formatdata"
 	"github.com/udistrital/utils_oas/request"
 	"github.com/udistrital/utils_oas/time_bogota"
 )
 
-// TerceroController operations for Tercero
-type TerceroController struct {
-	beego.Controller
-}
-
-// URLMapping ...
-func (c *TerceroController) URLMapping() {
-	c.Mapping("ActualizarPersona", c.ActualizarPersona)
-	c.Mapping("GuardarPersona", c.GuardarPersona)
-	c.Mapping("GuardarDatosComplementarios", c.GuardarDatosComplementarios)
-	c.Mapping("GuardarDatosComplementariosParAcademico", c.GuardarDatosComplementariosParAcademico)
-	c.Mapping("ConsultarPersona", c.ConsultarPersona)
-	c.Mapping("GuardarDatosContacto", c.GuardarDatosContacto)
-	c.Mapping("ConsultarDatosComplementarios", c.ConsultarDatosComplementarios)
-	c.Mapping("ConsultarDatosContacto", c.ConsultarDatosContacto)
-	c.Mapping("ConsultarDatosFamiliar", c.ConsultarDatosFamiliar)
-	c.Mapping("ConsultarDatosFormacionPregrado", c.ConsultarDatosFormacionPregrado)
-	c.Mapping("ActualizarDatosComplementarios", c.ActualizarDatosComplementarios)
-	c.Mapping("ActualizarInfoFamiliar", c.ActualizarInfoFamiliar)
-	c.Mapping("ConsultarInfoEstudiante", c.ConsultarInfoEstudiante)
-	c.Mapping("GuardarAutor", c.GuardarAutor)
-	c.Mapping("ConsultarExistenciaPersona", c.ConsultarExistenciaPersona)
-}
-
-// ActualizarPersona ...
-// @Title ActualizarPersona
-// @Description Actualizar datos de persona
-// @Param	body		body 	{}	true		"body for Actualizar datos de persona content"
-// @Success	200	{}
-// @Failure	403	body is empty
-// @router /actualizar_persona [put]
-func (c *TerceroController) ActualizarPersona() {
+func ActualizarPersona(data []byte) (interface{}, error) {
 	var body map[string]interface{}
 	response := make(map[string]interface{})
-	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &body); err == nil {
+	if err := json.Unmarshal(data, &body); err == nil {
 
 		if idTercero, ok := body["Tercero"].(map[string]interface{})["hasId"].(float64); ok {
 			var updateTercero map[string]interface{}
@@ -83,14 +53,12 @@ func (c *TerceroController) ActualizarPersona() {
 					if errUpdateTercero == nil {
 						response["tercero"] = updateTerceroAns
 					} else {
-						logs.Error(errUpdateTercero)
-						c.Data["system"] = errUpdateTercero
-						c.Abort("400")
+						logs.Error("Error --> ", errUpdateTercero)
+						return nil, errors.New(errUpdateTercero.Error())
 					}
 				} else {
-					logs.Error(errtercero)
-					c.Data["system"] = errtercero
-					c.Abort("400")
+					logs.Error("Error --> ", errtercero)
+					return nil, errors.New(errtercero.Error())
 				}
 			}
 
@@ -109,21 +77,31 @@ func (c *TerceroController) ActualizarPersona() {
 					if errUpdateIdentificacion == nil {
 						response["identificacion"] = updateIdentificacionAns
 					} else {
-						logs.Error(errUpdateIdentificacion)
-						c.Data["system"] = errUpdateIdentificacion
-						c.Abort("400")
+						logs.Error("Error --> ", errUpdateIdentificacion)
+						return nil, errors.New(errUpdateIdentificacion.Error())
 					}
 				} else {
-					logs.Error(erridentificacion)
-					c.Data["system"] = erridentificacion
-					c.Abort("400")
+					logs.Error("Error --> ", erridentificacion)
+					return nil, errors.New(erridentificacion.Error())
 				}
 			}
 
 			complementarios := body["Complementarios"].(map[string]interface{})
 
-			if generoAns, ok := updateOrCreateInfoComplementaria("Genero", complementarios, idTercero); ok {
+			if generoAns, ok := helpers.UpdateOrCreateInfoComplementaria("Genero", complementarios, idTercero); ok {
 				response["genero"] = generoAns
+			}
+
+			if estadoCivilAns, ok := helpers.UpdateOrCreateInfoComplementaria("EstadoCivil", complementarios, idTercero); ok {
+				response["estadoCivil"] = estadoCivilAns
+			}
+
+			if orientacionSexualAns, ok := helpers.UpdateOrCreateInfoComplementaria("OrientacionSexual", complementarios, idTercero); ok {
+				response["orientacionSexual"] = orientacionSexualAns
+			}
+
+			if identidadGeneroAns, ok := helpers.UpdateOrCreateInfoComplementaria("IdentidadGenero", complementarios, idTercero); ok {
+				response["identidadGenero"] = identidadGeneroAns
 			}
 
 			if body["Complementarios"].(map[string]interface{})["Telefono"].(map[string]interface{})["hasId"] != nil {
@@ -158,66 +136,19 @@ func (c *TerceroController) ActualizarPersona() {
 					response["telefono"] = createinfo
 				}
 			}
+			return response, nil
 
 		} else {
-			c.Abort("400")
+			return nil, errors.New("error del servicio ActualizarPersona: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 		}
 
 	} else {
-		logs.Error(err)
-		c.Data["system"] = err
-		c.Abort("400")
+		logs.Error("Error --> ", err)
+		return nil, errors.New("error del servicio ActualizarPersona: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido" + err.Error())
 	}
-
-	c.Data["json"] = response
-	c.ServeJSON()
 }
 
-func updateOrCreateInfoComplementaria(tipoInfo string, infoComp map[string]interface{}, idTercero float64) (map[string]interface{}, bool) {
-	resp := map[string]interface{}{}
-	ok := false
-	fmt.Println("Llelgó")
-	if infoComp[tipoInfo].(map[string]interface{})["hasId"] != nil {
-		idInfComp := infoComp[tipoInfo].(map[string]interface{})["hasId"].(float64)
-		var updateInfoComp map[string]interface{}
-		errUpdtInfoComp := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero/"+fmt.Sprintf("%v", idInfComp), &updateInfoComp)
-		if errUpdtInfoComp == nil && updateInfoComp["Status"] != 404 {
-			dataToUpdate := infoComp[tipoInfo].(map[string]interface{})["data"].(map[string]interface{})
-			updateInfoComp["InfoComplementariaId"] = dataToUpdate
-
-			var updateAnswer map[string]interface{}
-			errupdateAnswer := request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero/"+fmt.Sprintf("%.f", idInfComp), "PUT", &updateAnswer, updateInfoComp)
-			if errupdateAnswer == nil {
-				resp = updateAnswer
-				ok = true
-			}
-		}
-	} else {
-		newInfo := map[string]interface{}{
-			"TerceroId":            map[string]interface{}{"Id": idTercero},
-			"InfoComplementariaId": infoComp[tipoInfo].(map[string]interface{})["data"].(map[string]interface{}),
-			"Activo":               true,
-		}
-		var createinfo map[string]interface{}
-		errCreateInfo := request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero", "POST", &createinfo, newInfo)
-		if errCreateInfo == nil && fmt.Sprintf("%v", createinfo) != "map[]" && createinfo["Id"] != nil {
-			resp = createinfo
-			ok = true
-		}
-	}
-
-	return resp, ok
-}
-
-// GuardarPersona ...
-// @Title PostPersona
-// @Description Guardar Persona
-// @Param	body		body 	{}	true		"body for Guardar Persona content"
-// @Success 201 {int}
-// @Failure 400 the request contains incorrect syntax
-// @router /guardar_persona [post]
-func (c *TerceroController) GuardarPersona() {
-
+func GuardarPersona(data []byte) (interface{}, error) {
 	//resultado solicitud de descuento
 	var resultado map[string]interface{}
 	//solicitud de descuento
@@ -225,10 +156,11 @@ func (c *TerceroController) GuardarPersona() {
 	var terceroPost map[string]interface{}
 
 	var paramReq = []string{"PrimerNombre", "SegundoNombre", "PrimerApellido", "SegundoApellido", "FechaNacimiento", "Usuario",
-		"TipoIdentificacion", "NumeroIdentificacion", "FechaExpedicion", "Genero", "Telefono"}
+		"TipoIdentificacion", "NumeroIdentificacion", "FechaExpedicion", "EstadoCivil", "Genero", "OrientacionSexual",
+		"IdentidadGenero", "Telefono"}
 	var jsonOk bool = true
 
-	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &tercero); err == nil && fmt.Sprintf("%v", tercero) != "map[]" {
+	if err := json.Unmarshal(data, &tercero); err == nil && fmt.Sprintf("%v", tercero) != "map[]" {
 		for _, key := range paramReq {
 			if _, ok := tercero[key]; !ok {
 				jsonOk = false
@@ -273,101 +205,179 @@ func (c *TerceroController) GuardarPersona() {
 					errIdentificacion := request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"datos_identificacion", "POST", &identificacion, identificaciontercero)
 					if errIdentificacion == nil && fmt.Sprintf("%v", identificacion) != "map[]" && identificacion["Id"] != nil {
 						if identificacion["Status"] != 400 {
-							var genero map[string]interface{}
-							InfoComplementariaId2 := map[string]interface{}{
-								"Id": tercero["Genero"].(map[string]interface{})["Id"],
+							var estado map[string]interface{}
+							InfoComplementariaId := map[string]interface{}{
+								"Id": tercero["EstadoCivil"].(map[string]interface{})["Id"],
 							}
-							generotercero := map[string]interface{}{
+							estadociviltercero := map[string]interface{}{
 								"TerceroId":            TerceroId,
-								"InfoComplementariaId": InfoComplementariaId2,
+								"InfoComplementariaId": InfoComplementariaId,
 								"Activo":               true,
 							}
-							errGenero := request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero", "POST", &genero, generotercero)
-							if errGenero == nil && fmt.Sprintf("%v", genero) != "map[]" && genero["Id"] != nil {
-								if genero["Status"] != 400 {
-									IdTelefono, _ := models.IdInfoCompTercero("10", "TELEFONO")
-									ItTel, _ := strconv.ParseFloat(IdTelefono, 64)
-									newInfo := map[string]interface{}{
+							errEstado := request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero", "POST", &estado, estadociviltercero)
+							if errEstado == nil && fmt.Sprintf("%v", estado) != "map[]" && estado["Id"] != nil {
+								if estado["Status"] != 400 {
+									var genero map[string]interface{}
+									InfoComplementariaId2 := map[string]interface{}{
+										"Id": tercero["Genero"].(map[string]interface{})["Id"],
+									}
+									generotercero := map[string]interface{}{
 										"TerceroId":            TerceroId,
-										"InfoComplementariaId": map[string]interface{}{"Id": ItTel},
-										"Dato":                 fmt.Sprintf("{\"principal\":%.0f,\"alterno\":null}", tercero["Telefono"]),
+										"InfoComplementariaId": InfoComplementariaId2,
 										"Activo":               true,
 									}
-									formatdata.JsonPrint(newInfo)
-									var createinfo map[string]interface{}
-									errCreateInfo := request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero", "POST", &createinfo, newInfo)
-									if errCreateInfo == nil && fmt.Sprintf("%v", createinfo) != "map[]" && createinfo["Id"] != nil {
-										resultado = terceroPost
-										resultado["NumeroIdentificacion"] = identificacion["Numero"]
-										resultado["TipoIdentificacionId"] = identificacion["TipoDocumentoId"].(map[string]interface{})["Id"]
-										resultado["FechaExpedicion"] = identificacion["FechaExpedicion"]
-										resultado["TelefonoId"] = createinfo["Id"]
+									errGenero := request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero", "POST", &genero, generotercero)
+									if errGenero == nil && fmt.Sprintf("%v", genero) != "map[]" && genero["Id"] != nil {
+										if genero["Status"] != 400 {
+											var orientacionSexual map[string]interface{}
+											InfoComplementariaId3 := map[string]interface{}{
+												"Id": tercero["OrientacionSexual"].(map[string]interface{})["Id"],
+											}
+											orientacionSexualtercero := map[string]interface{}{
+												"TerceroId":            TerceroId,
+												"InfoComplementariaId": InfoComplementariaId3,
+												"Activo":               true,
+											}
+											errOrientacionSexual := request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero", "POST", &orientacionSexual, orientacionSexualtercero)
+											if errOrientacionSexual == nil && fmt.Sprintf("%v", orientacionSexual) != "map[]" && orientacionSexual["Id"] != nil {
+												if orientacionSexual["Status"] != 400 {
+													var identidadGenero map[string]interface{}
+													InfoComplementariaId4 := map[string]interface{}{
+														"Id": tercero["IdentidadGenero"].(map[string]interface{})["Id"],
+													}
+													identidadGenerotercero := map[string]interface{}{
+														"TerceroId":            TerceroId,
+														"InfoComplementariaId": InfoComplementariaId4,
+														"Activo":               true,
+													}
+													errIdentidadGenero := request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero", "POST", &identidadGenero, identidadGenerotercero)
+													if errIdentidadGenero == nil && fmt.Sprintf("%v", identidadGenero) != "map[]" && identidadGenero["Id"] != nil {
+														if identidadGenero["Status"] != 400 {
+															IdTelefono, _ := models.IdInfoCompTercero("10", "TELEFONO")
+															ItTel, _ := strconv.ParseFloat(IdTelefono, 64)
+															newInfo := map[string]interface{}{
+																"TerceroId":            TerceroId,
+																"InfoComplementariaId": map[string]interface{}{"Id": ItTel},
+																"Dato":                 fmt.Sprintf("{\"principal\":%.0f,\"alterno\":null}", tercero["Telefono"]),
+																"Activo":               true,
+															}
+															formatdata.JsonPrint(newInfo)
+															var createinfo map[string]interface{}
+															errCreateInfo := request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero", "POST", &createinfo, newInfo)
+															if errCreateInfo == nil && fmt.Sprintf("%v", createinfo) != "map[]" && createinfo["Id"] != nil {
+																resultado = terceroPost
+																resultado["NumeroIdentificacion"] = identificacion["Numero"]
+																resultado["TipoIdentificacionId"] = identificacion["TipoDocumentoId"].(map[string]interface{})["Id"]
+																resultado["FechaExpedicion"] = identificacion["FechaExpedicion"]
+																resultado["EstadoCivilId"] = estado["Id"]
+																resultado["GeneroId"] = genero["Id"]
+																resultado["OrientacionSexualId"] = orientacionSexual["Id"]
+																resultado["IdentidadGeneroId"] = identidadGenero["Id"]
+																resultado["TelefonoId"] = createinfo["Id"]
 
-										c.Data["json"] = resultado
+																return resultado, nil
+															}
+
+														} else {
+															//var resultado2 map[string]interface{}
+															models.SetInactivo(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero/%.f", identidadGenero["Id"]))
+															//request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero/%.f", identidadGenero["Id"]), "DELETE", &resultado2, nil)
+															models.SetInactivo(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero/%.f", orientacionSexual["Id"]))
+															//request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero/%.f", orientacionSexual["Id"]), "DELETE", &resultado2, nil)
+															models.SetInactivo(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero/%.f", estado["Id"]))
+															//request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero/%.f", estado["Id"]), "DELETE", &resultado2, nil)
+															models.SetInactivo(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"datos_identificacion/%.f", identificacion["Id"]))
+															//request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"datos_identificacion/%.f", identificacion["Id"]), "DELETE", &resultado2, nil)
+															models.SetInactivo(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"tercero/%.f", terceroPost["Id"]))
+															//request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"tercero/%.f", terceroPost["Id"]), "DELETE", &resultado2, nil)
+															logs.Error("Error --> ", errIdentidadGenero)
+															return nil, errors.New("error del servicio GuardarPersona: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
+
+														}
+													} else {
+														logs.Error("Error --> ", errIdentidadGenero)
+														return nil, errors.New("error del servicio GuardarPersona: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
+													}
+
+												} else {
+													//var resultado2 map[string]interface{}
+													models.SetInactivo(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero/%.f", orientacionSexual["Id"]))
+													//request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero/%.f", orientacionSexual["Id"]), "DELETE", &resultado2, nil)
+													models.SetInactivo(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero/%.f", estado["Id"]))
+													//request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero/%.f", estado["Id"]), "DELETE", &resultado2, nil)
+													models.SetInactivo(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"datos_identificacion/%.f", identificacion["Id"]))
+													//request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"datos_identificacion/%.f", identificacion["Id"]), "DELETE", &resultado2, nil)
+													models.SetInactivo(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"tercero/%.f", terceroPost["Id"]))
+													//request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"tercero/%.f", terceroPost["Id"]), "DELETE", &resultado2, nil)
+													logs.Error("Error --> ", errOrientacionSexual)
+													return nil, errors.New("error del servicio GuardarPersona: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
+												}
+											} else {
+												logs.Error("Error --> ", errOrientacionSexual)
+												return nil, errors.New("error del servicio GuardarPersona: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
+											}
+
+										} else {
+											//var resultado2 map[string]interface{}
+											models.SetInactivo(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero/%.f", estado["Id"]))
+											//request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero/%.f", estado["Id"]), "DELETE", &resultado2, nil)
+											models.SetInactivo(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"datos_identificacion/%.f", identificacion["Id"]))
+											//request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"datos_identificacion/%.f", identificacion["Id"]), "DELETE", &resultado2, nil)
+											models.SetInactivo(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"tercero/%.f", terceroPost["Id"]))
+											//request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"tercero/%.f", terceroPost["Id"]), "DELETE", &resultado2, nil)
+											logs.Error("Error --> ", errGenero)
+											return nil, errors.New("error del servicio GuardarPersona: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
+										}
+									} else {
+										logs.Error("Error --> ", errGenero)
+										return nil, errors.New("error del servicio GuardarPersona: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 									}
-
 								} else {
-									//request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero/%.f", estado["Id"]), "DELETE", &resultado2, nil)
+									//Si pasa un error borra todo lo creado al momento del registro del estado civil
+									//var resultado2 map[string]interface{}
 									models.SetInactivo(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"datos_identificacion/%.f", identificacion["Id"]))
 									//request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"datos_identificacion/%.f", identificacion["Id"]), "DELETE", &resultado2, nil)
 									models.SetInactivo(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"tercero/%.f", terceroPost["Id"]))
 									//request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"tercero/%.f", terceroPost["Id"]), "DELETE", &resultado2, nil)
-									logs.Error(errGenero)
-									c.Data["system"] = genero
-									c.Abort("400")
+									logs.Error("Error --> ", errEstado)
+									return nil, errors.New("error del servicio GuardarPersona: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 								}
 							} else {
-								logs.Error(errGenero)
-								c.Data["system"] = genero
-								c.Abort("400")
+								logs.Error("Error --> ", errEstado)
+								return nil, errors.New("error del servicio GuardarPersona: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 							}
 						} else {
 							//Si pasa un error borra todo lo creado al momento del registro del documento de identidad
 							//var resultado2 map[string]interface{}
 							models.SetInactivo(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"tercero/%.f", terceroPost["Id"]))
 							//request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"tercero/%.f", terceroPost["Id"]), "DELETE", &resultado2, nil)
-							logs.Error(errIdentificacion)
-							c.Data["system"] = identificacion
-							c.Abort("400")
+							logs.Error("Error --> ", errIdentificacion)
+							return nil, errors.New("error del servicio GuardarPersona: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 						}
 					} else {
-						logs.Error(errIdentificacion)
-						c.Data["system"] = identificacion
-						c.Abort("400")
+						logs.Error("Error --> ", errIdentificacion)
+						return nil, errors.New("error del servicio GuardarPersona: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 					}
 				} else {
-					logs.Error(errPersona)
-					fmt.Println("errPersona")
-					c.Data["system"] = terceroPost
-					c.Abort("400")
+					logs.Error("Error --> ", errPersona)
+					return nil, errors.New("error del servicio GuardarPersona: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 				}
 			} else {
-				logs.Error(errPersona)
-				c.Data["system"] = terceroPost
-				c.Abort("400")
+				logs.Error("Error --> ", errPersona)
+				return nil, errors.New("error del servicio GuardarPersona: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 			}
 		} else {
-			logs.Error("Body contains an incorrect data type or an invalid parameter")
-			c.Ctx.Output.SetStatus(400)
-			c.Data["json"] = map[string]interface{}{"Success": false, "Status": "400", "Message": "Error service PostGuardarPersona: The request contains an incorrect data type or an invalid parameter"}
+			logs.Error("Error --> ", "Body contains an incorrect data type or an invalid parameter")
+			return nil, errors.New("error del servicio GuardarPersona: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 		}
 	} else {
-		logs.Error(err)
-		c.Ctx.Output.SetStatus(400)
-		c.Data["json"] = map[string]interface{}{"Success": false, "Status": "400", "Message": "Error service PostGuardarPersona: The request contains an incorrect data type or an invalid parameter"}
+		logs.Error("Error --> ", err)
+		return nil, errors.New("error del servicio GuardarPersona: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 	}
-	c.ServeJSON()
+	return nil, errors.New("error del servicio GuardarPersona: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 }
 
-// GuardarDatosComplementarios ...
-// @Title GuardarDatosComplementarios
-// @Description Guardar Datos Complementarios Persona
-// @Param	body		body 	{}	true		"body for Guardar Datos Complementarios Persona content"
-// @Success 201 {int}
-// @Failure 400 the request contains incorrect syntax
-// @router /guardar_complementarios [post]
-func (c *TerceroController) GuardarDatosComplementarios() {
-
+func GuardarDatosComplementarios(data []byte) (interface{}, error) {
 	var tercero map[string]interface{}     // Body POST
 	var HayError bool = false              // Handle Errors
 	var resultado []map[string]interface{} // Response POST
@@ -376,20 +386,13 @@ func (c *TerceroController) GuardarDatosComplementarios() {
 	var terceroOrg map[string]interface{} // tercero info orig if error
 	var LugarPut map[string]interface{}   // resp Put lugar
 
-	var alerta models.Alert
-	alertas := []interface{}{"Response:"}
-	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &tercero); err == nil {
+	if err := json.Unmarshal(data, &tercero); err == nil {
 
 		errtercero := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"tercero/"+fmt.Sprintf("%.f", tercero["Tercero"].(float64)), &terceroget)
 		if errtercero == nil && terceroget["Status"] != 400 {
 			terceroOrg = terceroget
 		} else {
 			HayError = true
-			alertas = append(alertas, errtercero.Error())
-			alerta.Code = "400"
-			alerta.Type = "error"
-			alerta.Body = alertas
-			c.Data["json"] = alerta
 		}
 
 		if !HayError {
@@ -425,125 +428,20 @@ func (c *TerceroController) GuardarDatosComplementarios() {
 
 						} else {
 							HayError = true
-							logs.Error(errFactorRhPost)
-							//c.Data["development"] = map[string]interface{}{"Code": "400", "Body": err.Error(), "Type": "error"}
-							c.Data["system"] = FactorRhPost
-							c.Abort("400")
+							return nil, errors.New("error del servicio GuardarDatosComplementarios: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 						}
 					} else {
 						HayError = true
-						logs.Error(errFactorRhPost)
-						//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-						c.Data["system"] = FactorRhPost
-						c.Abort("400")
+						return nil, errors.New("error del servicio GuardarDatosComplementarios: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 					}
 
 				} else {
 					HayError = true
-					logs.Error(errGrupoSanguineoPost)
-					//c.Data["development"] = map[string]interface{}{"Code": "400", "Body": err.Error(), "Type": "error"}
-					c.Data["system"] = grupoSanguineoPost
-					c.Abort("400")
+					return nil, errors.New("error del servicio GuardarDatosComplementarios: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 				}
 			} else {
 				HayError = true
-				logs.Error(errGrupoSanguineoPost)
-				//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-				c.Data["system"] = grupoSanguineoPost
-				c.Abort("400")
-			}
-		}
-
-		if !HayError {
-			var estado map[string]interface{}
-			InfoComplementariaId4 := map[string]interface{}{
-				"Id": tercero["EstadoCivil"],
-			}
-			estadociviltercero := map[string]interface{}{
-				"TerceroId":            map[string]interface{}{"Id": tercero["Tercero"].(float64)},
-				"InfoComplementariaId": InfoComplementariaId4,
-				"Activo":               true,
-			}
-			errEstado := request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero", "POST", &estado, estadociviltercero)
-			if errEstado == nil && fmt.Sprintf("%v", estado) != "map[]" && estado["Id"] != nil {
-				if estado["Status"] != 400 {
-					//Ok POST Gr sang
-					resultado = append(resultado, estado)
-				} else {
-					HayError = true
-					logs.Error(errEstado)
-					//c.Data["development"] = map[string]interface{}{"Code": "400", "Body": err.Error(), "Type": "error"}
-					c.Data["system"] = estado
-					c.Abort("400")
-				}
-			} else {
-				HayError = true
-				logs.Error(errEstado)
-				//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-				c.Data["system"] = estado
-				c.Abort("400")
-			}
-		}
-
-		if !HayError {
-			var orientacionSexual map[string]interface{}
-			InfoComplementariaId5 := map[string]interface{}{
-				"Id": tercero["OrientacionSexual"],
-			}
-			orientacionSexualTercero := map[string]interface{}{
-				"TerceroId":            map[string]interface{}{"Id": tercero["Tercero"].(float64)},
-				"InfoComplementariaId": InfoComplementariaId5,
-				"Activo":               true,
-			}
-			errOrientacionSexual := request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero", "POST", &orientacionSexual, orientacionSexualTercero)
-			if errOrientacionSexual == nil && fmt.Sprintf("%v", orientacionSexual) != "map[]" && orientacionSexual["Id"] != nil {
-				if orientacionSexual["Status"] != 400 {
-					//Ok POST Gr sang
-					resultado = append(resultado, orientacionSexual)
-				} else {
-					HayError = true
-					logs.Error(err)
-					//c.Data["development"] = map[string]interface{}{"Code": "400", "Body": err.Error(), "Type": "error"}
-					c.Data["system"] = orientacionSexual
-					c.Abort("400")
-				}
-			} else {
-				HayError = true
-				logs.Error(errOrientacionSexual)
-				//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-				c.Data["system"] = orientacionSexual
-				c.Abort("400")
-			}
-		}
-
-		if !HayError {
-			var identidadGenero map[string]interface{}
-			InfoComplementariaId6 := map[string]interface{}{
-				"Id": tercero["IdentidadGenero"],
-			}
-			identidadGenerotercero := map[string]interface{}{
-				"TerceroId":            map[string]interface{}{"Id": tercero["Tercero"].(float64)},
-				"InfoComplementariaId": InfoComplementariaId6,
-				"Activo":               true,
-			}
-			errIdentidadGenero := request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero", "POST", &identidadGenero, identidadGenerotercero)
-			if errIdentidadGenero == nil && fmt.Sprintf("%v", identidadGenero) != "map[]" && identidadGenero["Id"] != nil {
-				if identidadGenero["Status"] != 400 {
-					//Ok POST Gr sang
-					resultado = append(resultado, identidadGenero)
-				} else {
-					HayError = true
-					logs.Error(errIdentidadGenero)
-					//c.Data["development"] = map[string]interface{}{"Code": "400", "Body": err.Error(), "Type": "error"}
-					c.Data["system"] = identidadGenero
-					c.Abort("400")
-				}
-			} else {
-				HayError = true
-				logs.Error(errIdentidadGenero)
-				//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-				c.Data["system"] = identidadGenero
-				c.Abort("400")
+				return nil, errors.New("error del servicio GuardarDatosComplementarios: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 			}
 		}
 
@@ -564,17 +462,13 @@ func (c *TerceroController) GuardarDatosComplementarios() {
 						resultado = append(resultado, poblacionPost1)
 					} else {
 						HayError = true
-						logs.Error(errPoblacionPost1)
-						//c.Data["development"] = map[string]interface{}{"Code": "400", "Body": err.Error(), "Type": "error"}
-						c.Data["system"] = poblacionPost1
-						c.Abort("400")
+						logs.Error("Error --> ", errPoblacionPost1)
+						return nil, errors.New("error del servicio GuardarDatosComplementarios: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 					}
 				} else {
 					HayError = true
-					logs.Error(errPoblacionPost1)
-					//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-					c.Data["system"] = poblacionPost1
-					c.Abort("400")
+					logs.Error("Error --> ", errPoblacionPost1)
+					return nil, errors.New("error del servicio GuardarDatosComplementarios: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 				}
 			}
 			if fmt.Sprintf("%v", reflect.TypeOf(tercero["ComprobantePoblacion"])) == "map[string]interface {}" {
@@ -593,15 +487,13 @@ func (c *TerceroController) GuardarDatosComplementarios() {
 
 					} else {
 						HayError = true
-						logs.Error(errPoblacionPost2)
-						c.Data["system"] = poblacionPost2
-						c.Abort("400")
+						logs.Error("Error --> ", errPoblacionPost2)
+						return nil, errors.New("error del servicio GuardarDatosComplementarios: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 					}
 				} else {
 					HayError = true
-					logs.Error(errPoblacionPost2)
-					c.Data["system"] = poblacionPost2
-					c.Abort("400")
+					logs.Error("Error --> ", errPoblacionPost2)
+					return nil, errors.New("error del servicio GuardarDatosComplementarios: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 				}
 			}
 		}
@@ -616,17 +508,13 @@ func (c *TerceroController) GuardarDatosComplementarios() {
 
 				} else {
 					HayError = true
-					logs.Error(errLugarPut)
-					//c.Data["development"] = map[string]interface{}{"Code": "400", "Body": err.Error(), "Type": "error"}
-					c.Data["system"] = LugarPut
-					c.Abort("400")
+					logs.Error("Error --> ", errLugarPut)
+					return nil, errors.New("error del servicio GuardarDatosComplementarios: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 				}
 			} else {
 				HayError = true
-				logs.Error(errLugarPut)
-				//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-				c.Data["system"] = LugarPut
-				c.Abort("400")
+				logs.Error("Error --> ", errLugarPut)
+				return nil, errors.New("error del servicio GuardarDatosComplementarios: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 			}
 		}
 
@@ -647,17 +535,13 @@ func (c *TerceroController) GuardarDatosComplementarios() {
 						resultado = append(resultado, discapacidadPost1)
 					} else {
 						HayError = true
-						logs.Error(errDiscapacidadPost1)
-						//c.Data["development"] = map[string]interface{}{"Code": "400", "Body": err.Error(), "Type": "error"}
-						c.Data["system"] = discapacidadPost1
-						c.Abort("400")
+						logs.Error("Error --> ", errDiscapacidadPost1)
+						return nil, errors.New("error del servicio GuardarDatosComplementarios: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 					}
 				} else {
 					HayError = true
-					logs.Error(errDiscapacidadPost1)
-					//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-					c.Data["system"] = discapacidadPost1
-					c.Abort("400")
+					logs.Error("Error --> ", errDiscapacidadPost1)
+					return nil, errors.New("error del servicio GuardarDatosComplementarios: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 				}
 			}
 			if fmt.Sprintf("%v", reflect.TypeOf(tercero["ComprobanteDiscapacidad"])) == "map[string]interface {}" {
@@ -676,15 +560,13 @@ func (c *TerceroController) GuardarDatosComplementarios() {
 
 					} else {
 						HayError = true
-						logs.Error(errDiscapacidadPost2)
-						c.Data["system"] = discapacidadPost2
-						c.Abort("400")
+						logs.Error("Error --> ", errDiscapacidadPost2)
+						return nil, errors.New("error del servicio GuardarDatosComplementarios: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 					}
 				} else {
 					HayError = true
-					logs.Error(errDiscapacidadPost2)
-					c.Data["system"] = discapacidadPost2
-					c.Abort("400")
+					logs.Error("Error --> ", errDiscapacidadPost2)
+					return nil, errors.New("error del servicio GuardarDatosComplementarios: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 				}
 			}
 		}
@@ -704,17 +586,15 @@ func (c *TerceroController) GuardarDatosComplementarios() {
 				if errNuevaEPS == nil && fmt.Sprintf("%v", postEPS) != "map[]" && postEPS["Id"] != nil {
 					if postEPS["Status"] == 400 {
 						HayError = true
-						logs.Error(errNuevaEPS)
-						c.Data["system"] = postEPS
-						c.Abort("400")
+						logs.Error("Error --> ", errNuevaEPS)
+						return nil, errors.New("error del servicio GuardarDatosComplementarios: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 					} else {
 						resultado = append(resultado, postEPS)
 					}
 				} else {
 					HayError = true
-					logs.Error(errNuevaEPS)
-					c.Data["system"] = postEPS
-					c.Abort("400")
+					logs.Error("Error --> ", errNuevaEPS)
+					return nil, errors.New("error del servicio GuardarDatosComplementarios: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 				}
 
 			}
@@ -738,17 +618,15 @@ func (c *TerceroController) GuardarDatosComplementarios() {
 				if errGrupoSisbenPost == nil && fmt.Sprintf("%v", postGrupoSisben) != "map[]" && postGrupoSisben["Id"] != nil {
 					if postGrupoSisben["Status"] == 400 {
 						HayError = true
-						logs.Error(errGrupoSisbenPost)
-						c.Data["system"] = postGrupoSisben
-						c.Abort("400")
+						logs.Error("Error --> ", errGrupoSisbenPost)
+						return nil, errors.New("error del servicio GuardarDatosComplementarios: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 					} else {
 						resultado = append(resultado, postGrupoSisben)
 					}
 				} else {
 					HayError = true
-					logs.Error(errGrupoSisbenPost)
-					c.Data["system"] = postGrupoSisben
-					c.Abort("400")
+					logs.Error("Error --> ", errGrupoSisbenPost)
+					return nil, errors.New("error del servicio GuardarDatosComplementarios: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 				}
 			}
 		}
@@ -767,32 +645,28 @@ func (c *TerceroController) GuardarDatosComplementarios() {
 				if errGrupoSisbenPost == nil && fmt.Sprintf("%v", postNumeroHermanos) != "map[]" && postNumeroHermanos["Id"] != nil {
 					if postNumeroHermanos["Status"] == 400 {
 						HayError = true
-						logs.Error(errGrupoSisbenPost)
-						c.Data["system"] = postNumeroHermanos
-						c.Abort("400")
+						logs.Error("Error --> ", errGrupoSisbenPost)
+						return nil, errors.New("error del servicio GuardarDatosComplementarios: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 					} else {
 						resultado = append(resultado, postNumeroHermanos)
 					}
 				} else {
 					HayError = true
-					logs.Error(errGrupoSisbenPost)
-					c.Data["system"] = postNumeroHermanos
-					c.Abort("400")
+					logs.Error("Error --> ", errGrupoSisbenPost)
+					return nil, errors.New("error del servicio GuardarDatosComplementarios: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 				}
 			}
 		}
 
 	} else {
 		HayError = true
-		logs.Error(err)
-		//c.Data["development"] = map[string]interface{}{"Code": "400", "Body": err.Error(), "Type": "error"}
-		c.Data["system"] = err
-		c.Abort("400")
+		logs.Error("Error --> ", err)
+		return nil, errors.New("error del servicio GuardarDatosComplementarios: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 	}
 
 	if !HayError { // if all ok, pass response
 		resultado = append(resultado, LugarPut)
-		c.Data["json"] = resultado
+		return resultado, nil
 	} else { // Delete POSTed if error
 		for _, infoComp := range resultado {
 			var respDel map[string]interface{}
@@ -801,44 +675,28 @@ func (c *TerceroController) GuardarDatosComplementarios() {
 		var respPut map[string]interface{} // restore Put data tercero
 		request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"tercero/"+fmt.Sprintf("%.f", terceroOrg["Id"].(float64)), "PUT", &respPut, terceroOrg)
 	}
-
-	c.ServeJSON()
+	return nil, errors.New("error del servicio GuardarDatosComplementarios: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 }
 
-// GuardarDatosComplementariosParAcademico ...
-// @Title GuardarDatosComplementariosParAcademico
-// @Description Guardar Datos Complementarios Persona ParAcademico
-// @Param	body		body 	{}	true		"body for Guardar Datos Complementarios Persona content"
-// @Success 201 {int}
-// @Failure 400 the request contains incorrect syntax
-// @router /guardar_complementarios_par [post]
-func (c *TerceroController) GuardarDatosComplementariosParAcademico() {
-
+func GuardarDatosComplementariosParAcademico(data []byte) (interface{}, error) {
 	//resultado solicitud de descuento
 	var resultado map[string]interface{}
 	//solicitud de descuento
 	var tercero map[string]interface{}
 	var terceroget map[string]interface{}
 	var tercerooriginal map[string]interface{}
-	var alerta models.Alert
 	var Area_Conocimiento map[string]interface{}
 	var Nivel_Formacion map[string]interface{}
 	var Institucionr map[string]interface{}
-	alertas := []interface{}{"Response:"}
 
-	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &tercero); err == nil {
+	if err := json.Unmarshal(data, &tercero); err == nil {
 
 		errtercero := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"/tercero/"+fmt.Sprintf("%v", tercero["Tercero"].(map[string]interface{})["Id"]), &terceroget)
 		if errtercero == nil && terceroget["Status"] != 400 {
-
 			tercerooriginal = terceroget
 		} else {
-
-			alertas = append(alertas, errtercero.Error())
-			alerta.Code = "400"
-			alerta.Type = "error"
-			alerta.Body = alertas
-			c.Data["json"] = alerta
+			logs.Error(errtercero.Error())
+			return nil, errors.New("error del servicio GuardarDatosComplementariosParAcademico: [errtercero] La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 		}
 
 		Area_ConocimientoTemp := tercero["AreaConocimiento"].(map[string]interface{})["AREA_CONOCIMIENTO"].([]interface{})
@@ -909,66 +767,46 @@ func (c *TerceroController) GuardarDatosComplementariosParAcademico() {
 							if InstitucionPost["Status"] != 400 {
 
 								resultado = tercero
-								c.Data["json"] = resultado
+								return resultado, nil
 							} else {
 								var resultado2 map[string]interface{}
 								request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/"+fmt.Sprintf("%v", NivelformacionPost["Id"]), "DELETE", &resultado2, nil)
 								request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/"+fmt.Sprintf("%v", AreaConocimientoPost["Id"]), "DELETE", &resultado2, nil)
-								logs.Error(errInstitucionPost)
-								//c.Data["development"] = map[string]interface{}{"Code": "400", "Body": err.Error(), "Type": "error"}
-								c.Data["system"] = InstitucionPost
-								c.Abort("400")
+								logs.Error("Error --> ", errInstitucionPost)
+								return nil, errors.New("error del servicio GuardarDatosComplementariosParAcademico: [errInstitucionPost] La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 							}
 						} else {
-							logs.Error(errInstitucionPost)
-							// c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-							c.Data["system"] = InstitucionPost
-							c.Abort("400")
+							logs.Error("Error --> ", errInstitucionPost)
+							return nil, errors.New("error del servicio GuardarDatosComplementariosParAcademico: [errInstitucionPost] La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 						}
 					} else {
 						var resultado2 map[string]interface{}
 						request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/"+fmt.Sprintf("%v", AreaConocimientoPost["Id"]), "DELETE", &resultado2, nil)
 
-						logs.Error(errNivelFormacionPost)
-						//c.Data["development"] = map[string]interface{}{"Code": "400", "Body": err.Error(), "Type": "error"}
-						c.Data["system"] = NivelformacionPost
-						c.Abort("400")
+						logs.Error("Error --> ", errNivelFormacionPost)
+						return nil, errors.New("error del servicio GuardarDatosComplementariosParAcademico: [errNivelFormacionPost] La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 					}
 				} else {
-					logs.Error(errNivelFormacionPost)
-					//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-					c.Data["system"] = NivelformacionPost
-					c.Abort("400")
+					logs.Error("Error --> ", errNivelFormacionPost)
+					return nil, errors.New("error del servicio GuardarDatosComplementariosParAcademico: [errNivelFormacionPost] La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 				}
 
 			} else {
 
-				logs.Error(errAreaConocimientoPost)
-				//c.Data["development"] = map[string]interface{}{"Code": "400", "Body": err.Error(), "Type": "error"}
-				c.Data["system"] = AreaConocimientoPost
-				c.Abort("400")
+				logs.Error("Error --> ", errAreaConocimientoPost)
+				return nil, errors.New("error del servicio GuardarDatosComplementariosParAcademico: [errAreaConocimientoPost] La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 			}
 		} else {
-			logs.Error(errAreaConocimientoPost)
-			//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-			c.Data["system"] = AreaConocimientoPost
-			c.Abort("400")
+			logs.Error("Error --> ", errAreaConocimientoPost)
+			return nil, errors.New("error del servicio GuardarDatosComplementariosParAcademico: [errAreaConocimientoPost] La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 		}
 
-		c.ServeJSON()
+	} else {
+		return nil, errors.New("error del servicio GuardarDatosComplementariosParAcademico: [error] La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 	}
 }
 
-// ActualizarDatosComplementarios ...
-// @Title ActualizarDatosComplementarios
-// @Description ActualizarDatosComplementarios
-// @Param	body	body 	{}	true		"body for Actualizar los datos complementarios content"
-// @Success 200 {}
-// @Failure 403 body is empty
-// @router /actualizar_complementarios [put]
-func (c *TerceroController) ActualizarDatosComplementarios() {
-	// alerta que retorna la funcion ConsultaPersona
-	var alerta models.Alert
+func ActualizarDatosComplementarios(data []byte) (interface{}, error) {
 	//Persona a la cual se van a agregar los datos complementarios
 	var persona map[string]interface{}
 	//Grupo etnico al que pertenece la persona
@@ -1006,7 +844,7 @@ func (c *TerceroController) ActualizarDatosComplementarios() {
 	errores := []interface{}{"acumulado de alertas"}
 
 	//comprobar que el JSON de entrada sea correcto
-	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &persona); err == nil {
+	if err := json.Unmarshal(data, &persona); err == nil {
 		errPersona := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"tercero/?query=Id:"+fmt.Sprintf("%.f", persona["Ente"]), &resultado)
 		if errPersona == nil && resultado != nil {
 
@@ -1038,14 +876,12 @@ func (c *TerceroController) ActualizarDatosComplementarios() {
 							if Poblacion["Status"] != 400 {
 
 							} else {
-								logs.Error(errPoblacionPost)
-								c.Data["system"] = Poblacion
-								c.Abort("400")
+								logs.Error("Error --> ", errPoblacionPost)
+								return nil, errors.New("error del servicio ActualizarDatosComplementarios: [errPoblacionPost] La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 							}
 						} else {
-							logs.Error(errPoblacionPost)
-							c.Data["system"] = Poblacion
-							c.Abort("400")
+							logs.Error("Error --> ", errPoblacionPost)
+							return nil, errors.New("error del servicio ActualizarDatosComplementarios: [errPoblacionPost] La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 						}
 					}
 
@@ -1062,14 +898,12 @@ func (c *TerceroController) ActualizarDatosComplementarios() {
 							if Poblacion["Status"] != 400 {
 
 							} else {
-								logs.Error(errPoblacionPost)
-								c.Data["system"] = Poblacion
-								c.Abort("400")
+								logs.Error("Error --> ", errPoblacionPost)
+								return nil, errors.New("error del servicio ActualizarDatosComplementarios: [errPoblacionPost] La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 							}
 						} else {
-							logs.Error(errPoblacionPost)
-							c.Data["system"] = Poblacion
-							c.Abort("400")
+							logs.Error("Error --> ", errPoblacionPost)
+							return nil, errors.New("error del servicio ActualizarDatosComplementarios: [errPoblacionPost] La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 						}
 					}
 				}
@@ -1134,14 +968,12 @@ func (c *TerceroController) ActualizarDatosComplementarios() {
 							if Discapacidad["Status"] != 400 {
 
 							} else {
-								logs.Error(errDiscapacidadPost)
-								c.Data["system"] = Discapacidad
-								c.Abort("400")
+								logs.Error("Error --> ", errDiscapacidadPost)
+								return nil, errors.New("error del servicio ActualizarDatosComplementarios: [errDiscapacidadPost] La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 							}
 						} else {
-							logs.Error(errDiscapacidadPost)
-							c.Data["system"] = Discapacidad
-							c.Abort("400")
+							logs.Error("Error --> ", errDiscapacidadPost)
+							return nil, errors.New("error del servicio ActualizarDatosComplementarios: [errDiscapacidadPost] La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 						}
 					}
 
@@ -1158,14 +990,12 @@ func (c *TerceroController) ActualizarDatosComplementarios() {
 							if Discapacidad["Status"] != 400 {
 
 							} else {
-								logs.Error(errDiscapacidadPost)
-								c.Data["system"] = Discapacidad
-								c.Abort("400")
+								logs.Error("Error --> ", errDiscapacidadPost)
+								return nil, errors.New("error del servicio ActualizarDatosComplementarios: [errDiscapacidadPost] La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 							}
 						} else {
-							logs.Error(errDiscapacidadPost)
-							c.Data["system"] = Discapacidad
-							c.Abort("400")
+							logs.Error("Error --> ", errDiscapacidadPost)
+							return nil, errors.New("error del servicio ActualizarDatosComplementarios: [errDiscapacidadPost] La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 						}
 					}
 				}
@@ -1214,14 +1044,12 @@ func (c *TerceroController) ActualizarDatosComplementarios() {
 					errNuevaEPS := request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"seguridad_social_tercero", "POST", &postEPS, nuevaEPS)
 					if errNuevaEPS == nil && fmt.Sprintf("%v", postEPS) != "map[]" && postEPS["Id"] != nil {
 						if postEPS["Status"] == 400 {
-							logs.Error(errNuevaEPS)
-							c.Data["system"] = postEPS
-							c.Abort("400")
+							logs.Error("Error --> ", errNuevaEPS)
+							return nil, errors.New("error del servicio ActualizarDatosComplementarios: [errNuevaEPS] La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 						}
 					} else {
-						logs.Error(errNuevaEPS)
-						c.Data["system"] = postEPS
-						c.Abort("400")
+						logs.Error("Error --> ", errNuevaEPS)
+						return nil, errors.New("error del servicio ActualizarDatosComplementarios: [errNuevaEPS] La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 					}
 				}
 			}
@@ -1254,14 +1082,12 @@ func (c *TerceroController) ActualizarDatosComplementarios() {
 				errGrupoSisbenPost := request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero", "POST", &postGrupoSisben, nuevoGrupoSisben)
 				if errGrupoSisbenPost == nil && fmt.Sprintf("%v", postGrupoSisben) != "map[]" && postGrupoSisben["Id"] != nil {
 					if postGrupoSisben["Status"] == 400 {
-						logs.Error(errGrupoSisbenPost)
-						c.Data["system"] = postGrupoSisben
-						c.Abort("400")
+						logs.Error("Error --> ", errGrupoSisbenPost)
+						return nil, errors.New("error del servicio ActualizarDatosComplementarios: [errGrupoSisbenPost] La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 					}
 				} else {
-					logs.Error(errGrupoSisbenPost)
-					c.Data["system"] = postGrupoSisben
-					c.Abort("400")
+					logs.Error("Error --> ", errGrupoSisbenPost)
+					return nil, errors.New("error del servicio ActualizarDatosComplementarios: [errGrupoSisbenPost] La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 				}
 			}
 
@@ -1288,14 +1114,12 @@ func (c *TerceroController) ActualizarDatosComplementarios() {
 
 				if errGrupoSisbenPost == nil && fmt.Sprintf("%v", postNumeroHermanos) != "map[]" && postNumeroHermanos["Id"] != nil {
 					if postNumeroHermanos["Status"] == 400 {
-						logs.Error(errGrupoSisbenPost)
-						c.Data["system"] = postNumeroHermanos
-						c.Abort("400")
+						logs.Error("Error --> ", errGrupoSisbenPost)
+						return nil, errors.New("error del servicio ActualizarDatosComplementarios: [errGrupoSisbenPost] La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 					}
 				} else {
-					logs.Error(errGrupoSisbenPost)
-					c.Data["system"] = postNumeroHermanos
-					c.Abort("400")
+					logs.Error("Error --> ", errGrupoSisbenPost)
+					return nil, errors.New("error del servicio ActualizarDatosComplementarios: [errGrupoSisbenPost] La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 				}
 			}
 
@@ -1317,44 +1141,12 @@ func (c *TerceroController) ActualizarDatosComplementarios() {
 					if errUpdateEstado == nil {
 						errores = append(errores, "Estado civil actualizado")
 					} else {
-						logs.Error(errUpdateEstado.Error())
-						c.Data["system"] = errUpdateEstado.Error()
-						c.Abort("400")
+						logs.Error("Error --> ", errUpdateEstado)
+						return nil, errors.New("error del servicio ActualizarDatosComplementarios: [errUpdateEstado] La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 					}
 				} else {
-					logs.Error(errEstadoData.Error())
-					c.Data["system"] = errEstadoData.Error()
-					c.Abort("400")
-				}
-
-			}
-
-			if persona["EstadoCivil"] != nil {
-				var dataEstado []map[string]interface{}
-				var dataEstadoPut map[string]interface{}
-
-				//Consulta la existencia de el campo para actualizarlo
-				errEstadoData := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId:"+fmt.Sprintf("%.f", idPersona)+",Activo:True,InfoComplementariaId__GrupoInfoComplementariaId__Id:2", &dataEstado)
-				if errEstadoData == nil && dataEstado[0]["Id"] != nil {
-					//Interface para reasignar el Id del estado
-					dataPut := map[string]interface{}{
-						"Id": persona["EstadoCivil"].(map[string]interface{})["Id"].(float64),
-					}
-					//Asignacion a la data de envio
-					dataEstado[0]["InfoComplementariaId"] = dataPut
-					//Actualizacion de la informacion
-					errUpdateEstado := request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero/"+fmt.Sprintf("%.f", dataEstado[0]["Id"]), "PUT", &dataEstadoPut, dataEstado[0])
-					if errUpdateEstado == nil {
-						errores = append(errores, "Estado civil actualizado")
-					} else {
-						logs.Error(errUpdateEstado.Error())
-						c.Data["system"] = errUpdateEstado.Error()
-						c.Abort("400")
-					}
-				} else {
-					logs.Error(errEstadoData.Error())
-					c.Data["system"] = errEstadoData.Error()
-					c.Abort("400")
+					logs.Error("Error --> ", errEstadoData)
+					return nil, errors.New("error del servicio ActualizarDatosComplementarios: [errEstadoData] La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 				}
 
 			}
@@ -1377,14 +1169,12 @@ func (c *TerceroController) ActualizarDatosComplementarios() {
 					if errUpdateEstado == nil {
 						errores = append(errores, "Identidad actualizada")
 					} else {
-						logs.Error(errUpdateEstado.Error())
-						c.Data["system"] = errUpdateEstado.Error()
-						c.Abort("400")
+						logs.Error("Error --> ", errUpdateEstado)
+						return nil, errors.New("error del servicio ActualizarDatosComplementarios: [errUpdateEstado] La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 					}
 				} else {
-					logs.Error(errEstadoData.Error())
-					c.Data["system"] = errEstadoData.Error()
-					c.Abort("400")
+					logs.Error("Error --> ", errEstadoData)
+					return nil, errors.New("error del servicio ActualizarDatosComplementarios: [errEstadoData] La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 				}
 			}
 
@@ -1406,58 +1196,35 @@ func (c *TerceroController) ActualizarDatosComplementarios() {
 					if errUpdateEstado == nil {
 						errores = append(errores, "Orientacion actualizada")
 					} else {
-						logs.Error(errUpdateEstado.Error())
-						c.Data["system"] = errUpdateEstado.Error()
-						c.Abort("400")
+						logs.Error("Error --> ", errUpdateEstado)
+						return nil, errors.New("error del servicio ActualizarDatosComplementarios: [errUpdateEstado] La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 					}
 				} else {
-					logs.Error(errEstadoData.Error())
-					c.Data["system"] = errEstadoData.Error()
-					c.Abort("400")
+					logs.Error("Error --> ", errEstadoData)
+					return nil, errors.New("error del servicio ActualizarDatosComplementarios: [errEstadoData] La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 				}
 			}
-
-			alerta.Body = errores
-			c.Data["json"] = alerta
-			c.ServeJSON()
+			return errores, nil
 		} else {
 			if errPersona != nil {
-				errores = append(errores, []interface{}{"error persona: ", errPersona})
+				return nil, errors.New("error del servicio ActualizarDatosComplementarios: [errPersona] La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 			}
 			if len(resultado) == 0 {
-				errores = append(errores, []interface{}{"NO existe ninguna persona con este ente"})
+				return nil, errors.New("error del servicio ActualizarDatosComplementarios: NO existe ninguna persona con este ente")
 			}
-			alerta.Type = "error"
-			alerta.Code = "400"
-			alerta.Body = errores
-			c.Data["json"] = alerta
-			c.ServeJSON()
+			return nil, errors.New("error del servicio ActualizarDatosComplementarios: La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 		}
 	} else {
-		errores = append(errores, []interface{}{err.Error()})
-		c.Ctx.Output.SetStatus(200)
-		alerta.Type = "error"
-		alerta.Code = "401"
-		alerta.Body = errores
-		c.Data["json"] = alerta
-		c.ServeJSON()
+		logs.Error(err.Error())
+		return nil, errors.New("error del servicio ActualizarDatosComplementarios: " + err.Error())
 	}
 }
 
-// ConsultarExistenciaPersona ...
-// @Title ConsultarExistenciaPersona
-// @Description get ConsultarExistenciaPersona by NumeroIdentificacion
-// @Param	numeroDocumento	path	int 	true	"numero documento del tercero"
-// @Success 200 {}
-// @Failure 404 not found resource
-// @router /existe_persona/:numeroDocumento [get]
-func (c *TerceroController) ConsultarExistenciaPersona() {
-	numero := c.Ctx.Input.Param(":numeroDocumento")
-
+func ConsultarExistenciaPersona(numeroDocumento string) (interface{}, error) {
 	var resultados []map[string]interface{}
 
 	var documentos []map[string]interface{}
-	errDocumentos := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"datos_identificacion?query=Activo:true,Numero:"+numero+"&sortby=FechaCreacion&order=desc&limit=0", &documentos)
+	errDocumentos := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"datos_identificacion?query=Activo:true,Numero:"+numeroDocumento+"&sortby=FechaCreacion&order=desc&limit=0", &documentos)
 	if errDocumentos == nil && fmt.Sprintf("%v", documentos) != "[map[]]" {
 		for _, doc := range documentos {
 			preparedoc := doc["TerceroId"].(map[string]interface{})
@@ -1484,19 +1251,13 @@ func (c *TerceroController) ConsultarExistenciaPersona() {
 					preparedoc["EstadoCivilId"] = estado[0]["Id"]
 				} else {
 					if estado[0]["Message"] == "Not found resource" {
-						c.Data["json"] = nil
+
 					} else {
-						logs.Error(estado)
-						//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-						c.Data["system"] = errEstado
-						//c.Abort("404")
+						logs.Error("Error --> ", estado)
 					}
 				}
 			} else {
-				logs.Error(estado)
-				//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-				c.Data["system"] = errEstado
-				//c.Abort("404")
+				logs.Error("Error --> ", estado)
 			}
 
 			errGenero := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+
@@ -1507,19 +1268,12 @@ func (c *TerceroController) ConsultarExistenciaPersona() {
 					preparedoc["GeneroId"] = genero[0]["Id"]
 				} else {
 					if genero[0]["Message"] == "Not found resource" {
-						c.Data["json"] = nil
 					} else {
-						logs.Error(genero)
-						//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-						c.Data["system"] = errGenero
-						//c.Abort("404")
+						logs.Error("Error --> ", genero)
 					}
 				}
 			} else {
-				logs.Error(genero)
-				//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-				c.Data["system"] = errGenero
-				//c.Abort("404")
+				logs.Error("Error --> ", genero)
 			}
 
 			errOrientacionSexual := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+
@@ -1530,19 +1284,12 @@ func (c *TerceroController) ConsultarExistenciaPersona() {
 					preparedoc["OrientacionSexualId"] = orientacionSexual[0]["Id"]
 				} else {
 					if orientacionSexual[0]["Message"] == "Not found resource" {
-						c.Data["json"] = nil
 					} else {
-						logs.Error(orientacionSexual)
-						//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-						c.Data["system"] = errOrientacionSexual
-						//c.Abort("404")
+						logs.Error("Error --> ", orientacionSexual)
 					}
 				}
 			} else {
-				logs.Error(orientacionSexual)
-				//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-				c.Data["system"] = errOrientacionSexual
-				//c.Abort("404")
+				logs.Error("Error --> ", orientacionSexual)
 			}
 
 			errIdentidadGenero := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+
@@ -1553,19 +1300,12 @@ func (c *TerceroController) ConsultarExistenciaPersona() {
 					preparedoc["IdentidadGeneroId"] = identidadGenero[0]["Id"]
 				} else {
 					if identidadGenero[0]["Message"] == "Not found resource" {
-						c.Data["json"] = nil
 					} else {
-						logs.Error(identidadGenero)
-						//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-						c.Data["system"] = errIdentidadGenero
-						//c.Abort("404")
+						logs.Error("Error --> ", identidadGenero)
 					}
 				}
 			} else {
-				logs.Error(identidadGenero)
-				//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-				c.Data["system"] = errIdentidadGenero
-				//c.Abort("404")
+				logs.Error("Error --> ", identidadGenero)
 			}
 
 			IdTelefono, _ := models.IdInfoCompTercero("10", "TELEFONO")
@@ -1579,46 +1319,30 @@ func (c *TerceroController) ConsultarExistenciaPersona() {
 					preparedoc["TelefonoId"] = telefono[0]["Id"]
 				}
 			} else {
-				logs.Error(telefono)
-				c.Data["system"] = errTelefono
+				logs.Error("Error --> ", telefono)
 			}
 
 			resultados = append(resultados, preparedoc)
 		}
-		c.Data["json"] = resultados
+		return resultados, nil
 	} else {
-		logs.Error(documentos)
-		//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-		c.Data["system"] = errDocumentos
-		c.Abort("404")
+		logs.Error("Error --> ", documentos)
+		return nil, errors.New("error del servicio ConsultarExistenciaPersona: [errDocumentos] La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 	}
-
-	c.ServeJSON()
 }
 
-// ConsultarPersona ...
-// @Title ConsultarPersona
-// @Description get ConsultaPersona by id
-// @Param	tercero_id	path	int	true	"Id del tercero"
-// @Success 200 {}
-// @Failure 404 not found resource
-// @router /consultar_persona/:tercero_id [get]
-func (c *TerceroController) ConsultarPersona() {
-	//Id del tercero
-	idStr := c.Ctx.Input.Param(":tercero_id")
-	//fmt.Println(idStr)
-	//resultado informacion basica persona
+func ConsultarPersona(idTercero string) (interface{}, error) {
 	var resultado map[string]interface{}
 	var persona []map[string]interface{}
 
-	errPersona := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"tercero?query=Id:"+idStr, &persona)
+	errPersona := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"tercero?query=Id:"+idTercero, &persona)
 	if errPersona == nil && fmt.Sprintf("%v", persona[0]) != "map[]" {
 		if persona[0]["Status"] != 404 {
 			//formatdata.JsonPrint(persona)
 
 			var identificacion []map[string]interface{}
 
-			errIdentificacion := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"datos_identificacion?query=Activo:true,TerceroId.Id:"+idStr+",TipoDocumentoId__Id__lt:14&sortby=Id&order=desc&limit=0", &identificacion)
+			errIdentificacion := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"datos_identificacion?query=Activo:true,TerceroId.Id:"+idTercero+",TipoDocumentoId__Id__lt:14&sortby=Id&order=desc&limit=0", &identificacion)
 			if errIdentificacion == nil && fmt.Sprintf("%v", identificacion[0]) != "map[]" {
 				if identificacion[0]["Status"] != 404 {
 					var estado []map[string]interface{}
@@ -1645,25 +1369,14 @@ func (c *TerceroController) ConsultarPersona() {
 							//formatdata.JsonPrint(resultado)
 						} else {
 							if estado[0]["Message"] == "Not found resource" {
-								c.Data["json"] = nil
+								logs.Error("Not found resource")
 							} else {
-								logs.Error(estado)
-								//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-								c.Data["system"] = errEstado
-								//c.Abort("404")
+								logs.Error("Error --> ", errEstado.Error())
 							}
 						}
 					} else {
-						logs.Error(estado)
-						//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-						c.Data["system"] = errEstado
-						//c.Abort("404")
+						logs.Error("Error --> ", errEstado.Error())
 					}
-					//fmt.Println("ojoooooo paso estado")
-					//fmt.Print(persona[0]["Id"])
-					//fmt.Print("http://" + beego.AppConfig.String("TercerosService") + "info_complementaria_tercero?query=TerceroId.Id:" +
-					//fmt.Sprintf("%v", persona[0]["Id"]) + ",InfoComplementariaId.GrupoInfoComplementariaId.Id:6")
-					//formatdata.JsonPrint(genero)
 
 					errGenero := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+
 						fmt.Sprintf("%v", persona[0]["Id"])+",InfoComplementariaId.GrupoInfoComplementariaId.Id:6", &genero)
@@ -1671,23 +1384,15 @@ func (c *TerceroController) ConsultarPersona() {
 						if genero[0]["Status"] != 404 {
 							resultado["Genero"] = genero[0]["InfoComplementariaId"]
 							resultado["GeneroId"] = genero[0]["Id"]
-							//fmt.Println("Resultado genero")
-							//formatdata.JsonPrint(resultado)
 						} else {
 							if genero[0]["Message"] == "Not found resource" {
-								c.Data["json"] = nil
+								logs.Error("Not found resource")
 							} else {
-								logs.Error(genero)
-								//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-								c.Data["system"] = errGenero
-								//c.Abort("404")
+								logs.Error("Error --> ", genero)
 							}
 						}
 					} else {
-						logs.Error(genero)
-						//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-						c.Data["system"] = errGenero
-						//c.Abort("404")
+						logs.Error("Error --> ", genero)
 					}
 
 					errOrientacionSexual := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+
@@ -1698,19 +1403,12 @@ func (c *TerceroController) ConsultarPersona() {
 							resultado["OrientacionSexualId"] = orientacionSexual[0]["Id"]
 						} else {
 							if orientacionSexual[0]["Message"] == "Not found resource" {
-								c.Data["json"] = nil
 							} else {
-								logs.Error(orientacionSexual)
-								//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-								c.Data["system"] = errOrientacionSexual
-								//c.Abort("404")
+								logs.Error("Error --> ", orientacionSexual)
 							}
 						}
 					} else {
-						logs.Error(orientacionSexual)
-						//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-						c.Data["system"] = errOrientacionSexual
-						//c.Abort("404")
+						logs.Error("Error --> ", orientacionSexual)
 					}
 
 					errIdentidadGenero := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+
@@ -1721,19 +1419,12 @@ func (c *TerceroController) ConsultarPersona() {
 							resultado["IdentidadGeneroId"] = identidadGenero[0]["Id"]
 						} else {
 							if identidadGenero[0]["Message"] == "Not found resource" {
-								c.Data["json"] = nil
 							} else {
-								logs.Error(identidadGenero)
-								//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-								c.Data["system"] = errIdentidadGenero
-								//c.Abort("404")
+								logs.Error("Error --> ", identidadGenero)
 							}
 						}
 					} else {
-						logs.Error(identidadGenero)
-						//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-						c.Data["system"] = errIdentidadGenero
-						//c.Abort("404")
+						logs.Error("Error --> ", identidadGenero)
 					}
 
 					IdTelefono, _ := models.IdInfoCompTercero("10", "TELEFONO")
@@ -1747,62 +1438,43 @@ func (c *TerceroController) ConsultarPersona() {
 							resultado["TelefonoId"] = telefono[0]["Id"]
 						}
 					} else {
-						logs.Error(telefono)
-						c.Data["system"] = errTelefono
+						logs.Error("Error --> ", telefono)
 					}
 
-					c.Data["json"] = resultado
+					return resultado, nil
 
 				} else {
 					if identificacion[0]["Message"] == "Not found resource" {
-						c.Data["json"] = nil
+						return nil, errors.New("identificacion no encontrada")
 					} else {
-						logs.Error(identificacion)
-						//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-						c.Data["system"] = errIdentificacion
-						c.Abort("404")
+						logs.Error("Error --> ", identificacion)
+						return nil, errors.New("fallo al encontrar la identificacion")
 					}
 				}
 			} else {
-				logs.Error(identificacion)
-				//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-				c.Data["system"] = errIdentificacion
-				c.Abort("404")
+				logs.Error("Error --> ", identificacion)
+				return nil, errors.New("fallo al encontrar la identificacion")
 			}
 		} else {
 			if persona[0]["Message"] == "Not found resource" {
-				c.Data["json"] = nil
+				return nil, errors.New("recurso no encontrado [persona]")
 			} else {
-				logs.Error(persona)
-				//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-				c.Data["system"] = errPersona
-				c.Abort("404")
+				logs.Error("Error --> ", persona)
+				return nil, errors.New("error al consultar persona")
 			}
 		}
 	} else {
-		logs.Error(persona)
-		//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-		c.Data["system"] = errPersona
-		c.Abort("404")
-
+		logs.Error("Error --> ", persona)
+		return nil, errors.New(errPersona.Error())
 	}
-	c.ServeJSON()
 }
 
-// GuardarDatosContacto ...
-// @Title PostrDatosContacto
-// @Description Guardar DatosContacto
-// @Param	body		body 	{}	true		"body for Guardar DatosContacto content"
-// @Success 201 {int}
-// @Failure 400 the request contains incorrect syntax
-// @router /guardar_datos_contacto [post]
-func (c *TerceroController) GuardarDatosContacto() {
-
+func GuardarDatosContacto(data []byte) (interface{}, error) {
 	var resultado map[string]interface{}
 	var tercero map[string]interface{}
 	var EstratoPost map[string]interface{}
 
-	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &tercero); err == nil {
+	if err := json.Unmarshal(data, &tercero); err == nil {
 
 		// estrato tercero
 		estrato := map[string]interface{}{
@@ -1919,7 +1591,7 @@ func (c *TerceroController) GuardarDatosContacto() {
 																	if correoelectronicotercero["Status"] != 400 {
 																		// Resultado final
 																		resultado = tercero
-																		c.Data["json"] = resultado
+																		return resultado, nil
 																	} else {
 																		//Si pasa un error borra todo lo creado al momento del registro del correo electronico
 																		var resultado2 map[string]interface{}
@@ -1930,14 +1602,12 @@ func (c *TerceroController) GuardarDatosContacto() {
 																		request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", lugarresidenciaPost["Id"]), "DELETE", &resultado2, nil)
 																		request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", direccionPost["Id"]), "DELETE", &resultado2, nil)
 																		request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", estratoquiencosteaPost["Id"]), "DELETE", &resultado2, nil)
-																		logs.Error(errCorreo)
-																		c.Data["system"] = correoelectronicoPost
-																		c.Abort("400")
+																		logs.Error("Error --> ", errCorreo)
+																		return nil, errors.New("error del servicio GuardarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 																	}
 																} else {
-																	logs.Error(errCorreo)
-																	c.Data["system"] = correoelectronicoPost
-																	c.Abort("400")
+																	logs.Error("Error --> ", errCorreo)
+																	return nil, errors.New("error del servicio GuardarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 																}
 
 															} else {
@@ -1949,14 +1619,12 @@ func (c *TerceroController) GuardarDatosContacto() {
 																request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", telefonoalternativoPost["Id"]), "DELETE", &resultado2, nil)
 																request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", lugarresidenciaPost["Id"]), "DELETE", &resultado2, nil)
 																request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", direccionPost["Id"]), "DELETE", &resultado2, nil)
-																logs.Error(errEstratoResponsable)
-																c.Data["system"] = estratoquiencosteaPost
-																c.Abort("400")
+																logs.Error("Error --> ", errEstratoResponsable)
+																return nil, errors.New("error del servicio GuardarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 															}
 														} else {
-															logs.Error(errEstratoResponsable)
-															c.Data["system"] = estratoquiencosteaPost
-															c.Abort("400")
+															logs.Error("Error --> ", errEstratoResponsable)
+															return nil, errors.New("error del servicio GuardarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 														}
 
 													} else {
@@ -1967,14 +1635,12 @@ func (c *TerceroController) GuardarDatosContacto() {
 														request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", telefonoPost["Id"]), "DELETE", &resultado2, nil)
 														request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", telefonoalternativoPost["Id"]), "DELETE", &resultado2, nil)
 														request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", lugarresidenciaPost["Id"]), "DELETE", &resultado2, nil)
-														logs.Error(errDireccion)
-														c.Data["system"] = direccionPost
-														c.Abort("400")
+														logs.Error("Error --> ", errDireccion)
+														return nil, errors.New("error del servicio GuardarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 													}
 												} else {
-													logs.Error(errDireccion)
-													c.Data["system"] = direccionPost
-													c.Abort("400")
+													logs.Error("Error --> ", errDireccion)
+													return nil, errors.New("error del servicio GuardarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 												}
 											} else {
 												//Si pasa un error borra todo lo creado al momento del registro del lugar de residencia
@@ -1983,14 +1649,12 @@ func (c *TerceroController) GuardarDatosContacto() {
 												request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", codigopostalPost["Id"]), "DELETE", &resultado2, nil)
 												request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", telefonoPost["Id"]), "DELETE", &resultado2, nil)
 												request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", telefonoalternativoPost["Id"]), "DELETE", &resultado2, nil)
-												logs.Error(errLugarResidencia)
-												c.Data["system"] = lugarresidenciaPost
-												c.Abort("400")
+												logs.Error("Error --> ", errLugarResidencia)
+												return nil, errors.New("error del servicio GuardarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 											}
 										} else {
-											logs.Error(errLugarResidencia)
-											c.Data["system"] = lugarresidenciaPost
-											c.Abort("400")
+											logs.Error("Error --> ", errLugarResidencia)
+											return nil, errors.New("error del servicio GuardarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 										}
 									} else {
 										//Si pasa un error borra todo lo creado al momento del registro del telefono alterno
@@ -1999,80 +1663,60 @@ func (c *TerceroController) GuardarDatosContacto() {
 										request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", codigopostalPost["Id"]), "DELETE", &resultado2, nil)
 										request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", telefonoPost["Id"]), "DELETE", &resultado2, nil)
 
-										logs.Error(errTelefonoAlterno)
-										c.Data["system"] = telefonoalternativoPost
-										c.Abort("400")
+										logs.Error("Error --> ", errTelefonoAlterno)
+										return nil, errors.New("error del servicio GuardarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 									}
 								} else {
-									logs.Error(errTelefonoAlterno)
-									c.Data["system"] = telefonoalternativoPost
-									c.Abort("400")
+									logs.Error("Error --> ", errTelefonoAlterno)
+									return nil, errors.New("error del servicio GuardarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 								}
 							} else {
 								//Si pasa un error borra todo lo creado al momento del registro del telefono
 								var resultado2 map[string]interface{}
 								request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", EstratoPost["Id"]), "DELETE", &resultado2, nil)
 								request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", codigopostalPost["Id"]), "DELETE", &resultado2, nil)
-								logs.Error(errTelefono)
-								c.Data["system"] = telefonoPost
-								c.Abort("400")
+								logs.Error("Error --> ", errTelefono)
+								return nil, errors.New("error del servicio GuardarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 							}
 						} else {
-							logs.Error(errTelefono)
-							c.Data["system"] = telefonoPost
-							c.Abort("400")
+							logs.Error("Error --> ", errTelefono)
+							return nil, errors.New("error del servicio GuardarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 						}
 					} else {
 						//Si pasa un error borra todo lo creado al momento del registro del codigo postal
 						var resultado2 map[string]interface{}
 						request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/%.f", EstratoPost["Id"]), "DELETE", &resultado2, nil)
-						logs.Error(errCodigoPostal)
-						c.Data["system"] = codigopostalPost
-						c.Abort("400")
+						logs.Error("Error --> ", errCodigoPostal)
+						return nil, errors.New("error del servicio GuardarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 					}
 				} else {
-					logs.Error(errCodigoPostal)
-					c.Data["system"] = codigopostalPost
-					c.Abort("400")
+					logs.Error("Error --> ", errCodigoPostal)
+					return nil, errors.New("error del servicio GuardarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 				}
 			} else {
-				logs.Error(errEstrato)
-				c.Data["system"] = EstratoPost
-				c.Abort("400")
+				logs.Error("Error --> ", errEstrato)
+				return nil, errors.New("error del servicio GuardarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 			}
 		} else {
-			logs.Error(errEstrato)
-			c.Data["system"] = EstratoPost
-			c.Abort("400")
+			logs.Error("Error --> ", errEstrato)
+			return nil, errors.New("error del servicio GuardarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 		}
 	} else {
-		logs.Error(err)
-		c.Data["system"] = err
-		c.Abort("400")
+		logs.Error("Error --> ", err)
+		return nil, errors.New("error del servicio GuardarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 
 	}
-	c.ServeJSON()
 }
 
-// ConsultarDatosComplementarios ...
-// @Title ConsultarDatosComplementarios
-// @Description get ConsultarDatosComplementarios by id
-// @Param	tercero_id	path	int	true	"Id del ente"
-// @Success 200 {}
-// @Failure 404 not found resource
-// @router /consultar_complementarios/:tercero_id [get]
-func (c *TerceroController) ConsultarDatosComplementarios() {
+func ConsultarDatosComplementarios(idTercero string) (interface{}, error) {
 	//Id de la persona
-	idStr := c.Ctx.Input.Param(":tercero_id")
+
 	//resultado datos complementarios persona
 	respuesta := make(map[string]interface{})
 	var resultado map[string]interface{}
-	var errorGetAll bool
 	var tercero []map[string]interface{}
-	var alerta models.Alert
-	alertas := []interface{}{}
 
-	errTercero := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"/tercero/?query=Id:"+idStr, &tercero)
+	errTercero := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"/tercero/?query=Id:"+idTercero, &tercero)
 
 	if errTercero == nil && fmt.Sprintf("%v", tercero[0]) != "map[]" {
 		if tercero[0]["Status"] != 404 {
@@ -2138,7 +1782,7 @@ func (c *TerceroController) ConsultarDatosComplementarios() {
 											resultado["TipoDiscapacidad"] = tipoDiscapacidad
 
 											var ubicacionEnte map[string]interface{}
-											errUbicacion := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"tercero/"+idStr, &ubicacionEnte)
+											errUbicacion := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"tercero/"+idTercero, &ubicacionEnte)
 
 											if errUbicacion == nil && fmt.Sprintf("%v", ubicacionEnte) != "map[]" {
 												if ubicacionEnte["Status"] != 404 {
@@ -2153,7 +1797,7 @@ func (c *TerceroController) ConsultarDatosComplementarios() {
 
 															var grupoSisben []map[string]interface{}
 
-															errGrupoSisben := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=Activo:true,TerceroId.Id:"+idStr+",InfoComplementariaId.Id:42&sortby=Id&order=desc&limit=1", &grupoSisben)
+															errGrupoSisben := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=Activo:true,TerceroId.Id:"+idTercero+",InfoComplementariaId.Id:42&sortby=Id&order=desc&limit=1", &grupoSisben)
 															if errGrupoSisben == nil && fmt.Sprintf("%v", grupoSisben) != "[map[]]" {
 																var grSisben map[string]interface{}
 
@@ -2165,7 +1809,7 @@ func (c *TerceroController) ConsultarDatosComplementarios() {
 
 															var EPS []map[string]interface{}
 
-															errEPS := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"seguridad_social_tercero?query=Activo:true,TerceroId.Id:"+idStr, &EPS)
+															errEPS := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"seguridad_social_tercero?query=Activo:true,TerceroId.Id:"+idTercero, &EPS)
 															if errEPS == nil && fmt.Sprintf("%v", EPS) != "[map[]]" {
 																resultado["EPS"] = EPS[0]["TerceroEntidadId"]
 																resultado["FechaVinculacionEPS"] = EPS[0]["FechaInicioVinculacion"]
@@ -2173,300 +1817,110 @@ func (c *TerceroController) ConsultarDatosComplementarios() {
 
 															var hermanosUnivesidad []map[string]interface{}
 
-															errHermanosUni := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=Activo:true,TerceroId.Id:"+idStr+",InfoComplementariaId.Id:319&sortby=Id&order=desc&limit=1", &hermanosUnivesidad)
+															errHermanosUni := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=Activo:true,TerceroId.Id:"+idTercero+",InfoComplementariaId.Id:319&sortby=Id&order=desc&limit=1", &hermanosUnivesidad)
 															if errHermanosUni == nil && fmt.Sprintf("%v", hermanosUnivesidad) != "[map[]]" {
 																resultado["hermanosUnivesidad"] = hermanosUnivesidad[0]["Dato"]
 															}
 
 															respuesta["Data"] = resultado
-															c.Data["json"] = resultado
+															return resultado, nil
 														} else {
 															if lugar["Message"] == "Not found resource" {
-																errorGetAll = true
-																alertas = append(alertas, "Not found resource")
-																alerta.Code = "404"
-																alerta.Type = "error"
-																alerta.Body = alertas
-																c.Data["json"] = map[string]interface{}{"Response": alerta}
+																return nil, errors.New("error del servicio ConsultarDatosComplementarios:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 															} else {
-																errorGetAll = true
-																alertas = append(alertas, errLugar.Error())
-																alerta.Code = "400"
-																alerta.Type = "error"
-																alerta.Body = alertas
-																c.Data["json"] = map[string]interface{}{"Response": alerta}
+																return nil, errors.New("error del servicio ConsultarDatosComplementarios:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 															}
 														}
 													} else {
-														errorGetAll = true
-														alertas = append(alertas, errLugar)
-														alerta.Code = "404"
-														alerta.Type = "error"
-														alerta.Body = alertas
-														c.Data["json"] = map[string]interface{}{"Response": alerta}
+														return nil, errors.New("error del servicio ConsultarDatosComplementarios:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 													}
 												} else {
 													if ubicacionEnte["Message"] == "Not found resource" {
-														errorGetAll = true
-														alertas = append(alertas, "Not found resource")
-														alerta.Code = "404"
-														alerta.Type = "error"
-														alerta.Body = alertas
-														c.Data["json"] = map[string]interface{}{"Response": alerta}
+														return nil, errors.New("error del servicio ConsultarDatosComplementarios:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 													} else {
-														errorGetAll = true
-														alertas = append(alertas, errUbicacion)
-														alerta.Code = "404"
-														alerta.Type = "error"
-														alerta.Body = alertas
-														c.Data["json"] = map[string]interface{}{"Response": alerta}
+														log.Error(errUbicacion)
+														return nil, errors.New("error del servicio ConsultarDatosComplementarios:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 													}
 												}
 											} else {
-												errorGetAll = true
-												alertas = append(alertas, errUbicacion)
-												alerta.Code = "404"
-												alerta.Type = "error"
-												alerta.Body = alertas
-												c.Data["json"] = map[string]interface{}{"Response": alerta}
+												log.Error(errUbicacion)
+												return nil, errors.New("error del servicio ConsultarDatosComplementarios:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 											}
 
 										} else {
 											if discapacidades[0]["Message"] == "Not found resource" {
-												errorGetAll = true
-												alertas = append(alertas, "Not found resource")
-												alerta.Code = "404"
-												alerta.Type = "error"
-												alerta.Body = alertas
-												c.Data["json"] = map[string]interface{}{"Response": alerta}
+												return nil, errors.New("error del servicio ConsultarDatosComplementarios:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 											} else {
-												errorGetAll = true
-												alertas = append(alertas, errDiscapacidad)
-												alerta.Code = "404"
-												alerta.Type = "error"
-												alerta.Body = alertas
-												c.Data["json"] = map[string]interface{}{"Response": alerta}
+												log.Error(errDiscapacidad)
+												return nil, errors.New("error del servicio ConsultarDatosComplementarios:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 											}
 										}
 									} else {
-										errorGetAll = true
-										alertas = append(alertas, errDiscapacidad)
-										alerta.Code = "404"
-										alerta.Type = "error"
-										alerta.Body = alertas
-										c.Data["json"] = map[string]interface{}{"Response": alerta}
+										log.Error(errDiscapacidad)
+										return nil, errors.New("error del servicio ConsultarDatosComplementarios:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 									}
 								} else {
 									if fatorRHGet[0]["Message"] == "Not found resource" {
-										errorGetAll = true
-										alertas = append(alertas, "Not found resource")
-										alerta.Code = "404"
-										alerta.Type = "error"
-										alerta.Body = alertas
-										c.Data["json"] = map[string]interface{}{"Response": alerta}
+										return nil, errors.New("error del servicio ConsultarDatosComplementarios:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 									} else {
-										errorGetAll = true
-										alertas = append(alertas, errFactorRh)
-										alerta.Code = "404"
-										alerta.Type = "error"
-										alerta.Body = alertas
-										c.Data["json"] = map[string]interface{}{"Response": alerta}
+										log.Error(errFactorRh)
+										return nil, errors.New("error del servicio ConsultarDatosComplementarios:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 									}
 								}
 							} else {
-								errorGetAll = true
-								alertas = append(alertas, errFactorRh)
-								alerta.Code = "404"
-								alerta.Type = "error"
-								alerta.Body = alertas
-								c.Data["json"] = map[string]interface{}{"Response": alerta}
+								log.Error(errFactorRh)
+								return nil, errors.New("error del servicio ConsultarDatosComplementarios:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 							}
 						} else {
 							if grupoSanguineo[0]["Message"] == "Not found resource" {
-								errorGetAll = true
-								alertas = append(alertas, "Not found resource")
-								alerta.Code = "404"
-								alerta.Type = "error"
-								alerta.Body = alertas
-								c.Data["json"] = map[string]interface{}{"Response": alerta}
+								return nil, errors.New("error del servicio ConsultarDatosComplementarios:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 							} else {
-								errorGetAll = true
-								alertas = append(alertas, errGrupoSanguineo)
-								alerta.Code = "404"
-								alerta.Type = "error"
-								alerta.Body = alertas
-								c.Data["json"] = map[string]interface{}{"Response": alerta}
+								log.Error(errGrupoSanguineo)
+								return nil, errors.New("error del servicio ConsultarDatosComplementarios:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 							}
 						}
 					} else {
-						errorGetAll = true
-						alertas = append(alertas, errGrupoSanguineo)
-						alerta.Code = "404"
-						alerta.Type = "error"
-						alerta.Body = alertas
-						c.Data["json"] = map[string]interface{}{"Response": alerta}
+						log.Error(errGrupoSanguineo)
+						return nil, errors.New("error del servicio ConsultarDatosComplementarios:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 					}
 				} else {
 					if poblaciones[0]["Message"] == "Not found resource" {
-						errorGetAll = true
-						alertas = append(alertas, "Not found resource")
-						alerta.Code = "404"
-						alerta.Type = "error"
-						alerta.Body = alertas
-						c.Data["json"] = map[string]interface{}{"Response": alerta}
+						return nil, errors.New("error del servicio ConsultarDatosComplementarios:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 					} else {
-						errorGetAll = true
-						alertas = append(alertas, errPoblacion)
-						alerta.Code = "404"
-						alerta.Type = "error"
-						alerta.Body = alertas
-						c.Data["json"] = map[string]interface{}{"Response": alerta}
+						log.Error(errPoblacion)
+						return nil, errors.New("error del servicio ConsultarDatosComplementarios:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 					}
 				}
 			} else {
-				errorGetAll = true
-				alertas = append(alertas, errPoblacion)
-				alerta.Code = "404"
-				alerta.Type = "error"
-				alerta.Body = alertas
-				c.Data["json"] = map[string]interface{}{"Response": alerta}
+				log.Error(errPoblacion)
+				return nil, errors.New("error del servicio ConsultarDatosComplementarios:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 			}
 		} else {
 			if tercero[0]["Message"] == "Not found resource" {
-				errorGetAll = true
-				alertas = append(alertas, "Not found resource")
-				alerta.Code = "404"
-				alerta.Type = "error"
-				alerta.Body = alertas
-				c.Data["json"] = map[string]interface{}{"Response": alerta}
+				return nil, errors.New("error del servicio ConsultarDatosComplementarios:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 			} else {
-				errorGetAll = true
-				alertas = append(alertas, errTercero)
-				alerta.Code = "404"
-				alerta.Type = "error"
-				alerta.Body = alertas
-				c.Data["json"] = map[string]interface{}{"Response": alerta}
+				log.Error(errTercero)
+				return nil, errors.New("error del servicio ConsultarDatosComplementarios:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 			}
 		}
 	} else {
-		errorGetAll = true
-		alertas = append(alertas, errTercero)
-		alerta.Code = "404"
-		alerta.Type = "error"
-		alerta.Body = alertas
-		c.Data["json"] = map[string]interface{}{"Response": alerta}
+		log.Error(errTercero)
+		return nil, errors.New("error del servicio ConsultarDatosComplementarios:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 	}
-
-	if !errorGetAll {
-
-		fmt.Println("LLegó hasta el GetAll")
-		var orientacionSexual []map[string]interface{}
-
-		errOrientacionSexual := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+
-			fmt.Sprintf("%v", tercero[0]["Id"])+",InfoComplementariaId.GrupoInfoComplementariaId.Id:1636", &orientacionSexual)
-		if errOrientacionSexual == nil && fmt.Sprintf("%v", orientacionSexual[0]) != "map[]" {
-			if orientacionSexual[0]["Status"] != 404 {
-				resultado["OrientacionSexual"] = orientacionSexual[0]["InfoComplementariaId"]
-				resultado["OrientacionSexualId"] = orientacionSexual[0]["Id"]
-			} else {
-				if orientacionSexual[0]["Message"] == "Not found resource" {
-					c.Data["json"] = nil
-				} else {
-					logs.Error(orientacionSexual)
-					//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-					c.Data["system"] = errOrientacionSexual
-					//c.Abort("404")
-				}
-			}
-		} else {
-			logs.Error(orientacionSexual)
-			//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-			c.Data["system"] = errOrientacionSexual
-			//c.Abort("404")
-		}
-
-		var estado []map[string]interface{}
-		errEstado := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+
-			fmt.Sprintf("%v", tercero[0]["Id"])+",InfoComplementariaId.GrupoInfoComplementariaId.Id:2", &estado)
-		if errEstado == nil && fmt.Sprintf("%v", estado[0]) != "map[]" {
-			if estado[0]["Status"] != 404 {
-				resultado["EstadoCivil"] = estado[0]["InfoComplementariaId"]
-				resultado["EstadoCivilId"] = estado[0]["Id"]
-				//fmt.Println("Resultado estado civil")
-				//formatdata.JsonPrint(resultado)
-			} else {
-				if estado[0]["Message"] == "Not found resource" {
-					c.Data["json"] = nil
-				} else {
-					logs.Error(estado)
-					//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-					c.Data["system"] = errEstado
-					//c.Abort("404")
-				}
-			}
-		} else {
-			logs.Error(estado)
-			//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-			c.Data["system"] = errEstado
-			//c.Abort("404")
-		}
-
-		var identidadGenero []map[string]interface{}
-		errIdentidadGenero := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+
-			fmt.Sprintf("%v", tercero[0]["Id"])+",InfoComplementariaId.GrupoInfoComplementariaId.Id:1637", &identidadGenero)
-		if errIdentidadGenero == nil && fmt.Sprintf("%v", identidadGenero[0]) != "map[]" {
-			if identidadGenero[0]["Status"] != 404 {
-				resultado["IdentidadGenero"] = identidadGenero[0]["InfoComplementariaId"]
-				resultado["IdentidadGeneroId"] = identidadGenero[0]["Id"]
-			} else {
-				if identidadGenero[0]["Message"] == "Not found resource" {
-					c.Data["json"] = nil
-				} else {
-					logs.Error(identidadGenero)
-					//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-					c.Data["system"] = errIdentidadGenero
-					//c.Abort("404")
-				}
-			}
-		} else {
-			logs.Error(identidadGenero)
-			//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-			c.Data["system"] = errIdentidadGenero
-			//c.Abort("404")
-		}
-	}
-
-	if !errorGetAll {
-		alertas = append(alertas, respuesta)
-		alerta.Code = "200"
-		alerta.Type = "OK"
-		alerta.Body = alertas
-		c.Data["json"] = map[string]interface{}{"Response": alerta}
-	}
-	c.ServeJSON()
 }
 
-// ConsultarDatosContacto ...
-// @Title ConsultarDatosContacto
-// @Description get ConsultarDatosContacto by id
-// @Param	tercero_id	path	int	true	"Id del Tercero"
-// @Success 200 {}
-// @Failure 404 not found resource
-// @router /consultar_contacto/:tercero_id [get]
-func (c *TerceroController) ConsultarDatosContacto() {
-	//Id de la persona
-	idStr := c.Ctx.Input.Param(":tercero_id")
+func ConsultarDatosContacto(idTercero string) (interface{}, error) {
 	//resultado datos complementarios persona
 	var resultado map[string]interface{}
 	var persona []map[string]interface{}
 
-	errPersona := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"/tercero?query=Id:"+idStr, &persona)
+	errPersona := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"/tercero?query=Id:"+idTercero, &persona)
 	if errPersona == nil && fmt.Sprintf("%v", persona[0]) != "map[]" {
 		if persona[0]["Status"] != 404 {
 			var estratotercero []map[string]interface{}
 			resultado = map[string]interface{}{"Ente": persona[0]["Ente"], "Persona": persona[0]["Id"]}
 
-			errEstrato := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero?query=TerceroId.Id:"+idStr+",InfoComplementariaId.Id:41", &estratotercero)
+			errEstrato := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero?query=TerceroId.Id:"+idTercero+",InfoComplementariaId.Id:41", &estratotercero)
 			if errEstrato == nil && fmt.Sprintf("%v", estratotercero[0]) != "map[]" {
 
 				if estratotercero[0]["Status"] != 404 {
@@ -2475,44 +1929,44 @@ func (c *TerceroController) ConsultarDatosContacto() {
 
 					var estratoacudiente []map[string]interface{}
 
-					errEstratoAcudiente := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero?query=TerceroId.Id:"+idStr+",InfoComplementariaId.Id:57", &estratoacudiente)
+					errEstratoAcudiente := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero?query=TerceroId.Id:"+idTercero+",InfoComplementariaId.Id:57", &estratoacudiente)
 					if errEstratoAcudiente == nil && fmt.Sprintf("%v", estratoacudiente[0]) != "map[]" {
 						if estratoacudiente[0]["Status"] != 404 {
 							var CodigoPostal []map[string]interface{}
 							resultado["EstratoAcudiente"] = estratoacudiente[0]["Dato"]
 
-							errCodigoPostal := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero?query=TerceroId.Id:"+idStr+",InfoComplementariaId.Id:55", &CodigoPostal)
+							errCodigoPostal := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero?query=TerceroId.Id:"+idTercero+",InfoComplementariaId.Id:55", &CodigoPostal)
 							if errCodigoPostal == nil && fmt.Sprintf("%v", CodigoPostal[0]) != "map[]" {
 								if CodigoPostal[0]["Status"] != 404 {
 									var lugar map[string]interface{}
 									resultado["CodigoPostal"] = CodigoPostal[0]["Dato"]
 
 									var Telefono []map[string]interface{}
-									errTelefono := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero?query=TerceroId.Id:"+idStr+",InfoComplementariaId.Id:51", &Telefono)
+									errTelefono := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero?query=TerceroId.Id:"+idTercero+",InfoComplementariaId.Id:51", &Telefono)
 									if errTelefono == nil && fmt.Sprintf("%v", Telefono[0]) != "map[]" {
 										if Telefono[0]["Status"] != 404 {
 											resultado["Telefono"] = Telefono[0]["Dato"]
 
 											var TelefonoAlterno []map[string]interface{}
-											errTelefonoAlterno := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero?query=TerceroId.Id:"+idStr+",InfoComplementariaId.Id:52", &TelefonoAlterno)
+											errTelefonoAlterno := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero?query=TerceroId.Id:"+idTercero+",InfoComplementariaId.Id:52", &TelefonoAlterno)
 											if errTelefonoAlterno == nil && fmt.Sprintf("%v", TelefonoAlterno[0]) != "map[]" {
 												if TelefonoAlterno[0]["Status"] != 404 {
 													resultado["TelefonoAlterno"] = TelefonoAlterno[0]["Dato"]
 
 													var Direccion []map[string]interface{}
-													errDireccion := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero?query=TerceroId.Id:"+idStr+",InfoComplementariaId.Id:54", &Direccion)
+													errDireccion := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero?query=TerceroId.Id:"+idTercero+",InfoComplementariaId.Id:54", &Direccion)
 													if errDireccion == nil && fmt.Sprintf("%v", Direccion[0]) != "map[]" {
 														if Direccion[0]["Status"] != 404 {
 															resultado["Direccion"] = Direccion[0]["Dato"]
 
 															var Correo []map[string]interface{}
-															errCorreo := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero?query=TerceroId.Id:"+idStr+",InfoComplementariaId.Id:53", &Correo)
+															errCorreo := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero?query=TerceroId.Id:"+idTercero+",InfoComplementariaId.Id:53", &Correo)
 															if errCorreo == nil && fmt.Sprintf("%v", Correo[0]) != "map[]" {
 																if Correo[0]["Status"] != 404 {
 																	resultado["Correo"] = Correo[0]["Dato"]
 
 																	var ubicacionEnte []map[string]interface{}
-																	errUbicacion := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero?query=TerceroId.Id:"+idStr+",InfoComplementariaId.Id:58", &ubicacionEnte)
+																	errUbicacion := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero?query=TerceroId.Id:"+idTercero+",InfoComplementariaId.Id:58", &ubicacionEnte)
 																	if errUbicacion == nil && fmt.Sprintf("%v", ubicacionEnte[0]) != "map[]" {
 																		if ubicacionEnte[0]["Status"] != 404 {
 
@@ -2522,193 +1976,141 @@ func (c *TerceroController) ConsultarDatosContacto() {
 																				if lugar["Status"] != 404 {
 																					ubicacionEnte[0]["Lugar"] = lugar
 																					resultado["UbicacionEnte"] = ubicacionEnte[0]
-																					c.Data["json"] = resultado
+																					return resultado, nil
 																				} else {
 																					if lugar["Message"] == "Not found resource" {
-																						c.Data["json"] = nil
+																						return nil, errors.New("error del servicio ConsultarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 																					} else {
-																						logs.Error(lugar)
-																						//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-																						c.Data["system"] = errLugar
-																						c.Abort("404")
+																						logs.Error("Error --> ", lugar)
+																						return nil, errors.New("error del servicio ConsultarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 																					}
 																				}
 																			} else {
-																				logs.Error(lugar)
-																				//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-																				c.Data["system"] = errLugar
-																				c.Abort("404")
+																				logs.Error("Error --> ", lugar)
+																				return nil, errors.New("error del servicio ConsultarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 																			}
 
 																		} else {
 																			if ubicacionEnte[0]["Message"] == "Not found resource" {
-																				c.Data["json"] = nil
+																				return nil, errors.New("error del servicio ConsultarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 																			} else {
-																				logs.Error(ubicacionEnte)
-																				//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-																				c.Data["system"] = errUbicacion
-																				c.Abort("404")
+																				logs.Error("Error --> ", ubicacionEnte)
+																				return nil, errors.New("error del servicio ConsultarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 																			}
 																		}
 																	} else {
-																		logs.Error(ubicacionEnte)
-																		//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-																		c.Data["system"] = errUbicacion
-																		c.Abort("404")
+																		logs.Error("Error --> ", ubicacionEnte)
+																		return nil, errors.New("error del servicio ConsultarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 																	}
 																} else {
 																	if Correo[0]["Message"] == "Not found resource" {
-																		c.Data["json"] = nil
+																		return nil, errors.New("error del servicio ConsultarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 																	} else {
-																		logs.Error(Correo)
-																		//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-																		c.Data["system"] = errCorreo
-																		c.Abort("404")
+																		logs.Error("Error --> ", Correo)
+																		return nil, errors.New("error del servicio ConsultarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 																	}
 																}
 															} else {
-																logs.Error(Correo)
-																//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-																c.Data["system"] = errCorreo
-																c.Abort("404")
+																logs.Error("Error --> ", Correo)
+																return nil, errors.New("error del servicio ConsultarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 															}
 														} else {
 															if Direccion[0]["Message"] == "Not found resource" {
-																c.Data["json"] = nil
+																return nil, errors.New("error del servicio ConsultarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 															} else {
-																logs.Error(Direccion)
-																//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-																c.Data["system"] = errDireccion
-																c.Abort("404")
+																logs.Error("Error --> ", Direccion)
+																return nil, errors.New("error del servicio ConsultarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 															}
 														}
 													} else {
-														logs.Error(Direccion)
-														//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-														c.Data["system"] = errDireccion
-														c.Abort("404")
+														logs.Error("Error --> ", Direccion)
+														return nil, errors.New("error del servicio ConsultarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 													}
 
 												} else {
 													if TelefonoAlterno[0]["Message"] == "Not found resource" {
-														c.Data["json"] = nil
+														return nil, errors.New("error del servicio ConsultarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 													} else {
-														logs.Error(TelefonoAlterno)
-														//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-														c.Data["system"] = errTelefonoAlterno
-														c.Abort("404")
+														logs.Error("Error --> ", TelefonoAlterno)
+														return nil, errors.New("error del servicio ConsultarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 													}
 												}
 											} else {
-												logs.Error(TelefonoAlterno)
-												//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-												c.Data["system"] = errTelefonoAlterno
-												c.Abort("404")
+												logs.Error("Error --> ", TelefonoAlterno)
+												return nil, errors.New("error del servicio ConsultarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 											}
 
 										} else {
 											if Telefono[0]["Message"] == "Not found resource" {
-												c.Data["json"] = nil
+												return nil, errors.New("error del servicio ConsultarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 											} else {
-												logs.Error(Telefono)
-												//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-												c.Data["system"] = errTelefono
-												c.Abort("404")
+												logs.Error("Error --> ", Telefono)
+												return nil, errors.New("error del servicio ConsultarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 											}
 										}
 									} else {
-										logs.Error(Telefono)
-										//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-										c.Data["system"] = errTelefono
-										c.Abort("404")
+										logs.Error("Error --> ", Telefono)
+										return nil, errors.New("error del servicio ConsultarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 									}
 								} else {
 									if CodigoPostal[0]["Message"] == "Not found resource" {
-										c.Data["json"] = nil
+										return nil, errors.New("error del servicio ConsultarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 									} else {
-										logs.Error(CodigoPostal)
-										//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-										c.Data["system"] = errCodigoPostal
-										c.Abort("404")
+										logs.Error("Error --> ", CodigoPostal)
+										return nil, errors.New("error del servicio ConsultarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 									}
 								}
 							} else {
-								logs.Error(CodigoPostal)
-								//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-								c.Data["system"] = errCodigoPostal
-								c.Abort("404")
+								logs.Error("Error --> ", errCodigoPostal.Error())
+								return nil, errors.New("error del servicio ConsultarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 							}
 						} else {
 							if estratoacudiente[0]["Message"] == "Not found resource" {
-								c.Data["json"] = nil
+								return nil, errors.New("error del servicio ConsultarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 							} else {
-								logs.Error(estratoacudiente)
-								//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-								c.Data["system"] = errEstratoAcudiente
-								c.Abort("404")
+								logs.Error("Error --> ", estratoacudiente)
+								return nil, errors.New("error del servicio ConsultarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 							}
 						}
 					} else {
-						logs.Error(estratoacudiente)
-						//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-						c.Data["system"] = errEstratoAcudiente
-						c.Abort("404")
+						logs.Error("Error --> ", errEstratoAcudiente)
+						return nil, errors.New("error del servicio ConsultarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 					}
 				} else {
 					if estratotercero[0]["Message"] == "Not found resource" {
-						c.Data["json"] = nil
+						return nil, errors.New("error del servicio ConsultarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 					} else {
-						logs.Error(estratotercero)
-						//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-						c.Data["system"] = errEstrato
-						c.Abort("404")
+						logs.Error("Error --> ", estratotercero)
+						return nil, errors.New("error del servicio ConsultarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 					}
 				}
 			} else {
-				logs.Error(estratotercero)
-				//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-				c.Data["system"] = errEstrato
-				c.Abort("404")
+				logs.Error("Error --> ", errEstrato)
+				return nil, errors.New("error del servicio ConsultarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 			}
 		} else {
 			if persona[0]["Message"] == "Not found resource" {
-				c.Data["json"] = nil
+				return nil, errors.New("error del servicio ConsultarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 			} else {
-				logs.Error(persona)
-				//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-				c.Data["system"] = errPersona
-				c.Abort("404")
+				logs.Error("Error --> ", persona)
+				return nil, errors.New("error del servicio ConsultarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 			}
 		}
 	} else {
-		logs.Error(persona)
-		//c.Data["development"] = map[string]interface{}{"Code": "404", "Body": err.Error(), "Type": "error"}
-		c.Data["system"] = errPersona
-		c.Abort("404")
+		logs.Error("Error --> ", errPersona)
+		return nil, errors.New("error del servicio ConsultarDatosContacto:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 	}
-	c.ServeJSON()
 }
 
-// ConsultarDatosFamiliar ...
-// @Title ConsultarDatosFamiliar
-// @Description get ConsultarDatosFamiliar by id
-// @Param	tercero_id	path	int	true	"Id del Tercero"
-// @Success 200 {}
-// @Failure 404 not found resource
-// @router /consultar_familiar/:tercero_id [get]
-func (c *TerceroController) ConsultarDatosFamiliar() {
+func ConsultarDatosFamiliar(idTercero string) (interface{}, error) {
 	resultado := make(map[string]interface{})
 	var terceros []map[string]interface{}
 	var correos []map[string]interface{}
 	var telefonos []map[string]interface{}
 	var direcciones []map[string]interface{}
-	//Id de la persona
-	idStr := c.Ctx.Input.Param(":tercero_id")
-	var alerta models.Alert
 	var errorGetAll bool
-	alertas := []interface{}{"Data:"}
 
-	errTercero := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"tercero_familiar/?query=TerceroId__Id:"+idStr+"&sortby=Id&order=asc&limit=0", &terceros)
+	errTercero := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"tercero_familiar/?query=TerceroId__Id:"+idTercero+"&sortby=Id&order=asc&limit=0", &terceros)
 	if errTercero == nil {
 		if terceros != nil {
 			if fmt.Sprintf("%v", terceros[0]) != "map[]" {
@@ -2784,166 +2186,97 @@ func (c *TerceroController) ConsultarDatosFamiliar() {
 																					}
 																				} else {
 																					errorGetAll = true
-																					alertas = append(alertas, "No data found")
-																					alerta.Code = "404"
-																					alerta.Type = "error"
-																					alerta.Body = alertas
-																					c.Data["json"] = map[string]interface{}{"Response": alerta}
+																					return nil, errors.New("error del servicio ConsultarDatosFamiliar:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 																				}
 																			} else {
 																				errorGetAll = true
-																				alertas = append(alertas, errDireccion.Error())
-																				alerta.Code = "400"
-																				alerta.Type = "error"
-																				alerta.Body = alertas
-																				c.Data["json"] = map[string]interface{}{"Response": alerta}
+																				log.Error(errDireccion.Error())
+																				return nil, errors.New("error del servicio ConsultarDatosFamiliar:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 																			}
 																		}
 																	} else {
 																		errorGetAll = true
-																		alertas = append(alertas, "No data found")
-																		alerta.Code = "404"
-																		alerta.Type = "error"
-																		alerta.Body = alertas
-																		c.Data["json"] = map[string]interface{}{"Response": alerta}
+																		return nil, errors.New("error del servicio ConsultarDatosFamiliar:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 																	}
 																} else {
 																	errorGetAll = true
-																	alertas = append(alertas, errDireccion.Error())
-																	alerta.Code = "400"
-																	alerta.Type = "error"
-																	alerta.Body = alertas
-																	c.Data["json"] = map[string]interface{}{"Response": alerta}
+																	log.Error(errDireccion.Error())
+																	return nil, errors.New("error del servicio ConsultarDatosFamiliar:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 																}
 															}
 														} else {
 															errorGetAll = true
-															alertas = append(alertas, "No data found")
-															alerta.Code = "404"
-															alerta.Type = "error"
-															alerta.Body = alertas
-															c.Data["json"] = map[string]interface{}{"Response": alerta}
+															return nil, errors.New("error del servicio ConsultarDatosFamiliar:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 														}
 													} else {
 														errorGetAll = true
-														alertas = append(alertas, errTelefono.Error())
-														alerta.Code = "400"
-														alerta.Type = "error"
-														alerta.Body = alertas
-														c.Data["json"] = map[string]interface{}{"Response": alerta}
+														log.Error(errTelefono.Error())
+														return nil, errors.New("error del servicio ConsultarDatosFamiliar:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 													}
 												}
 											} else {
 												errorGetAll = true
-												alertas = append(alertas, "No data found")
-												alerta.Code = "404"
-												alerta.Type = "error"
-												alerta.Body = alertas
-												c.Data["json"] = map[string]interface{}{"Response": alerta}
+												return nil, errors.New("error del servicio ConsultarDatosFamiliar:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 											}
 										} else {
 											errorGetAll = true
-											alertas = append(alertas, errTelefono.Error())
-											alerta.Code = "400"
-											alerta.Type = "error"
-											alerta.Body = alertas
-											c.Data["json"] = map[string]interface{}{"Response": alerta}
+											log.Error(errTelefono.Error())
+											return nil, errors.New("error del servicio ConsultarDatosFamiliar:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 										}
 									}
 								} else {
 									errorGetAll = true
-									alertas = append(alertas, "No data found")
-									alerta.Code = "404"
-									alerta.Type = "error"
-									alerta.Body = alertas
-									c.Data["json"] = map[string]interface{}{"Response": alerta}
+									return nil, errors.New("error del servicio ConsultarDatosFamiliar:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 								}
 							} else {
 								errorGetAll = true
-								alertas = append(alertas, errCorreo.Error())
-								alerta.Code = "400"
-								alerta.Type = "error"
-								alerta.Body = alertas
-								c.Data["json"] = map[string]interface{}{"Response": alerta}
+								log.Error(errCorreo.Error())
+								return nil, errors.New("error del servicio ConsultarDatosFamiliar:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 							}
 						}
 					} else {
 						errorGetAll = true
-						alertas = append(alertas, "No data found")
-						alerta.Code = "404"
-						alerta.Type = "error"
-						alerta.Body = alertas
-						c.Data["json"] = map[string]interface{}{"Response": alerta}
+						return nil, errors.New("error del servicio ConsultarDatosFamiliar:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 					}
 				} else {
 					errorGetAll = true
-					alertas = append(alertas, errCorreo.Error())
-					alerta.Code = "400"
-					alerta.Type = "error"
-					alerta.Body = alertas
-					c.Data["json"] = map[string]interface{}{"Response": alerta}
+					log.Error(errCorreo.Error())
+					return nil, errors.New("error del servicio ConsultarDatosFamiliar:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 				}
 			} else {
 				errorGetAll = true
-				alertas = append(alertas, "No data found")
-				alerta.Code = "404"
-				alerta.Type = "error"
-				alerta.Body = alertas
-				c.Data["json"] = map[string]interface{}{"Response": alerta}
+				return nil, errors.New("error del servicio ConsultarDatosFamiliar:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 			}
 		} else {
 			errorGetAll = true
-			alertas = append(alertas, "No data found")
-			alerta.Code = "404"
-			alerta.Type = "error"
-			alerta.Body = alertas
-			c.Data["json"] = map[string]interface{}{"Response": alerta}
+			return nil, errors.New("error del servicio ConsultarDatosFamiliar:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 		}
 	} else {
-		if errTercero != nil {
-			alertas = append(alertas, errTercero)
+		switch {
+		case errTercero != nil:
+			return nil, errors.New("error del servicio ConsultarDatosFamiliar:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
+		case len(terceros) == 0:
+			return nil, errors.New("error del servicio ConsultarDatosFamiliar:   No existen familiares asociados a esta persona")
+		default:
+			return nil, errors.New("error del servicio ConsultarDatosFamiliar:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 		}
-		if len(terceros) == 0 {
-			alertas = append(alertas, []interface{}{"No existen familiares asociados a esta persona"})
-		}
-		errorGetAll = true
-		alerta.Type = "error"
-		alerta.Code = "400"
-		alerta.Body = alertas
-		c.Data["json"] = map[string]interface{}{"Response": alerta}
 	}
 
 	if !errorGetAll {
-		alertas = append(alertas, resultado)
-		alerta.Code = "200"
-		alerta.Type = "OK"
-		alerta.Body = alertas
-		c.Data["json"] = map[string]interface{}{"Response": alerta}
+		return resultado, nil
 	}
 
-	c.ServeJSON()
+	return nil, errors.New("error del servicio ConsultarDatosFamiliar:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 }
 
-// ConsultarDatosFormacionPregrado ...
-// @Title ConsultarDatosFormacionPregrado
-// @Description get ConsultarDatosFormacionPregrado by id
-// @Param	tercero_id	path	int	true	"Id del Tercero"
-// @Success 200 {}
-// @Failure 404 not found resource
-// @router /consultar_formacion_pregrado/:tercero_id [get]
-func (c *TerceroController) ConsultarDatosFormacionPregrado() {
-	//Id de la persona
-	idStr := c.Ctx.Input.Param(":tercero_id")
-	// resultado datos complementarios persona
+func ConsultarDatosFormacionPregrado(idTercero string) (interface{}, error) {
 	var resultado map[string]interface{}
 	var personaInscrita []map[string]interface{}
 	var IdColegioGet float64
 	resultado = make(map[string]interface{})
-	var alerta models.Alert
 	var errorGetAll bool
-	alertas := append([]interface{}{"Response:"})
 
-	errPersona := request.GetJson("http://"+beego.AppConfig.String("InscripcionService")+"/inscripcion_pregrado?query=Activo:true,InscripcionId.PersonaId:"+idStr, &personaInscrita)
+	errPersona := request.GetJson("http://"+beego.AppConfig.String("InscripcionService")+"/inscripcion_pregrado?query=Activo:true,InscripcionId.PersonaId:"+idTercero, &personaInscrita)
 	if errPersona == nil {
 		if fmt.Sprintf("%v", personaInscrita[0]) != "map[]" {
 			resultado = map[string]interface{}{"Persona Inscrita": personaInscrita[0]}
@@ -2952,14 +2285,14 @@ func (c *TerceroController) ConsultarDatosFormacionPregrado() {
 			resultado["Valido"] = personaInscrita[0]["Valido"]
 
 			var NumeroSemestre []map[string]interface{}
-			errNumeroSemestre := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/?query=TerceroId.Id:"+idStr+",InfoComplementariaId.GrupoInfoComplementariaId.Id:14&sortby=FechaCreacion&order=desc&limit=1", &NumeroSemestre)
+			errNumeroSemestre := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero/?query=TerceroId.Id:"+idTercero+",InfoComplementariaId.GrupoInfoComplementariaId.Id:14&sortby=FechaCreacion&order=desc&limit=1", &NumeroSemestre)
 			if errNumeroSemestre == nil && fmt.Sprintf("%v", NumeroSemestre[0]) != "map[]" {
 				if NumeroSemestre[0]["Status"] != 404 {
 					resultado["numeroSemestres"] = NumeroSemestre[0]
 					//cargar id colegio relacionado
 					var IdColegio []map[string]interface{}
 
-					errIdColegio := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId__Id:"+idStr+",InfoComplementariaId__Id:313,Activo:true&limit=0&sortby=FechaCreacion&order=desc", &IdColegio)
+					errIdColegio := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId__Id:"+idTercero+",InfoComplementariaId__Id:313,Activo:true&limit=0&sortby=FechaCreacion&order=desc", &IdColegio)
 					if errIdColegio == nil {
 						if fmt.Sprintf("%v", IdColegio[0]) != "map[]" {
 							var formacion map[string]interface{}
@@ -2982,19 +2315,10 @@ func (c *TerceroController) ConsultarDatosFormacionPregrado() {
 												}
 											} else {
 												errorGetAll = true
-												alertas = append(alertas, direccionColegio)
-												alerta.Code = "404"
-												alerta.Type = "error"
-												alerta.Body = alertas
-												c.Data["json"] = map[string]interface{}{"Response": alerta}
 											}
 										} else {
 											errorGetAll = true
-											alertas = append(alertas, errLugarColegio)
-											alerta.Code = "404"
-											alerta.Type = "error"
-											alerta.Body = alertas
-											c.Data["json"] = map[string]interface{}{"Response": alerta}
+											log.Error(errLugarColegio)
 										}
 
 										//cargar id Lugar colegio
@@ -3033,68 +2357,47 @@ func (c *TerceroController) ConsultarDatosFormacionPregrado() {
 															if colegio[0]["Status"] != 404 {
 																resultado["TipoColegio"] = colegio[0]["TipoTerceroId"].(map[string]interface{})["Id"]
 																resultado["Colegio"] = colegio[0]["TerceroId"]
-																c.Data["json"] = resultado
 
 															} else {
 																if colegio[0]["Message"] == "Not found resource" {
-																	c.Data["json"] = nil
+
 																} else {
 																	errorGetAll = true
-																	alertas = append(alertas, colegio)
-																	alerta.Code = "404"
-																	alerta.Type = "error"
-																	alerta.Body = alertas
-																	c.Data["json"] = map[string]interface{}{"Response": alerta}
+																	log.Error(colegio)
+
 																}
 															}
 														} else {
 															errorGetAll = true
-															alertas = append(alertas, errcolegio)
-															alerta.Code = "404"
-															alerta.Type = "error"
-															alerta.Body = alertas
-															c.Data["json"] = map[string]interface{}{"Response": alerta}
+															log.Error(errcolegio)
+
 														}
 													} else {
 														if lugar["Message"] == "Not found resource" {
-															c.Data["json"] = nil
+
 														} else {
 															errorGetAll = true
-															alertas = append(alertas, lugar)
-															alerta.Code = "404"
-															alerta.Type = "error"
-															alerta.Body = alertas
-															c.Data["json"] = map[string]interface{}{"Response": alerta}
+															log.Error(lugar)
+
 														}
 													}
 												} else {
 													errorGetAll = true
-													alertas = append(alertas, errLugar)
-													alerta.Code = "404"
-													alerta.Type = "error"
-													alerta.Body = alertas
-													c.Data["json"] = map[string]interface{}{"Response": alerta}
+													log.Error(errLugar)
+
 												}
 
 											} else {
 												if IdLugarColegio[0]["Message"] == "Not found resource" {
-													c.Data["json"] = nil
+
 												} else {
 													errorGetAll = true
-													alertas = append(alertas, IdLugarColegio)
-													alerta.Code = "404"
-													alerta.Type = "error"
-													alerta.Body = alertas
-													c.Data["json"] = map[string]interface{}{"Response": alerta}
+
 												}
 											}
 										} else {
 											errorGetAll = true
-											alertas = append(alertas, errIdLugarColegio)
-											alerta.Code = "404"
-											alerta.Type = "error"
-											alerta.Body = alertas
-											c.Data["json"] = map[string]interface{}{"Response": alerta}
+
 										}
 
 										break
@@ -3104,81 +2407,49 @@ func (c *TerceroController) ConsultarDatosFormacionPregrado() {
 
 						} else {
 							if IdColegio[0]["Message"] == "Not found resource" {
-								c.Data["json"] = nil
+								return nil, errors.New("error del servicio ConsultarDatosFormacionPregrado:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 							} else {
 								errorGetAll = true
-								alertas = append(alertas, IdColegio)
-								alerta.Code = "404"
-								alerta.Type = "error"
-								alerta.Body = alertas
-								c.Data["json"] = map[string]interface{}{"Response": alerta}
+								return nil, errors.New("error del servicio ConsultarDatosFormacionPregrado:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 							}
 						}
 					} else {
 						errorGetAll = true
-						alertas = append(alertas, errIdColegio)
-						alerta.Code = "404"
-						alerta.Type = "error"
-						alerta.Body = alertas
-						c.Data["json"] = map[string]interface{}{"Response": alerta}
+						return nil, errors.New("error del servicio ConsultarDatosFormacionPregrado:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 					}
 				} else {
 					if NumeroSemestre[0]["Message"] == "Not found resource" {
-						c.Data["json"] = nil
+						return nil, errors.New("error del servicio ConsultarDatosFormacionPregrado:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 					} else {
 						errorGetAll = true
-						alertas = append(alertas, NumeroSemestre)
-						alerta.Code = "404"
-						alerta.Type = "error"
-						alerta.Body = alertas
-						c.Data["json"] = map[string]interface{}{"Response": alerta}
+						return nil, errors.New("error del servicio ConsultarDatosFormacionPregrado:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 					}
 				}
 			} else {
 				errorGetAll = true
-				alertas = append(alertas, errNumeroSemestre)
-				alerta.Code = "404"
-				alerta.Type = "error"
-				alerta.Body = alertas
-				c.Data["json"] = map[string]interface{}{"Response": alerta}
+				return nil, errors.New("error del servicio ConsultarDatosFormacionPregrado:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 			}
 
 		} else {
 			if personaInscrita[0]["Message"] == "Not found resource" {
-				c.Data["json"] = nil
+				return nil, errors.New("error del servicio ConsultarDatosFormacionPregrado:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 			} else {
 				errorGetAll = true
-				alertas = append(alertas, personaInscrita)
-				alerta.Code = "404"
-				alerta.Type = "error"
-				alerta.Body = alertas
-				c.Data["json"] = map[string]interface{}{"Response": alerta}
+				return nil, errors.New("error del servicio ConsultarDatosFormacionPregrado:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 			}
 		}
 	} else {
 		errorGetAll = true
-		alertas = append(alertas, errPersona)
-		alerta.Code = "404"
-		alerta.Type = "error"
-		alerta.Body = alertas
-		c.Data["json"] = map[string]interface{}{"Response": alerta}
+		return nil, errors.New("error del servicio ConsultarDatosFormacionPregrado:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 	}
 
 	if !errorGetAll {
-		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Request successful", "Data": resultado}
+		return resultado, nil
 	}
-
-	c.ServeJSON()
+	return nil, errors.New("error del servicio ConsultarDatosFormacionPregrado:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 }
 
-// ActualizarInfoFamiliar ...
-// @Title ActualizarInfoFamiliar
-// @Description Actualiza la informacion familiar del tercero
-// @Param	body	body 	{}	true		"body for Actualizar la info familiar del tercero content"
-// @Success 200 {}
-// @Failure 403 body is empty
-// @router /info_familiar [put]
-func (c *TerceroController) ActualizarInfoFamiliar() {
+func ActualizarInfoFamiliar(data []byte) (interface{}, error) {
 	var InfoFamiliar map[string]interface{}
 	var Familiares []map[string]interface{}
 	var ParentescoPut map[string]interface{}
@@ -3189,11 +2460,9 @@ func (c *TerceroController) ActualizarInfoFamiliar() {
 	var Direccion []map[string]interface{}
 	var DireccionPut map[string]interface{}
 	resultado := make(map[string]interface{})
-	var alerta models.Alert
 	var errorGetAll bool
-	alertas := []interface{}{"Data:"}
 
-	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &InfoFamiliar); err == nil {
+	if err := json.Unmarshal(data, &InfoFamiliar); err == nil {
 		Familiar := InfoFamiliar["Familiares"].([]interface{})
 		IdTercero := fmt.Sprintf("%.f", InfoFamiliar["Tercero_Familiar"].(map[string]interface{})["Id"])
 
@@ -3231,35 +2500,15 @@ func (c *TerceroController) ActualizarInfoFamiliar() {
 								}
 							} else {
 								errorGetAll = true
-								alertas = append(alertas, "No data found")
-								alerta.Code = "404"
-								alerta.Type = "error"
-								alerta.Body = alertas
-								c.Data["json"] = map[string]interface{}{"Response": alerta}
 							}
 						} else {
 							errorGetAll = true
-							alertas = append(alertas, errParentesco.Error())
-							alerta.Code = "400"
-							alerta.Type = "error"
-							alerta.Body = alertas
-							c.Data["json"] = map[string]interface{}{"Response": alerta}
 						}
 					} else {
 						errorGetAll = true
-						alertas = append(alertas, "No data found")
-						alerta.Code = "404"
-						alerta.Type = "error"
-						alerta.Body = alertas
-						c.Data["json"] = map[string]interface{}{"Response": alerta}
 					}
 				} else {
 					errorGetAll = true
-					alertas = append(alertas, errParentesco.Error())
-					alerta.Code = "400"
-					alerta.Type = "error"
-					alerta.Body = alertas
-					c.Data["json"] = map[string]interface{}{"Response": alerta}
 				}
 
 				//PUT Telefono (Info complementaria 51)
@@ -3283,67 +2532,27 @@ func (c *TerceroController) ActualizarInfoFamiliar() {
 												resultado["TelefonoAlterno"] = TelefonoPut["Dato"]
 											} else {
 												errorGetAll = true
-												alertas = append(alertas, "No data found")
-												alerta.Code = "404"
-												alerta.Type = "error"
-												alerta.Body = alertas
-												c.Data["json"] = map[string]interface{}{"Response": alerta}
 											}
 										} else {
 											errorGetAll = true
-											alertas = append(alertas, errTelefono.Error())
-											alerta.Code = "400"
-											alerta.Type = "error"
-											alerta.Body = alertas
-											c.Data["json"] = map[string]interface{}{"Response": alerta}
 										}
 									} else {
 										errorGetAll = true
-										alertas = append(alertas, "No data found")
-										alerta.Code = "404"
-										alerta.Type = "error"
-										alerta.Body = alertas
-										c.Data["json"] = map[string]interface{}{"Response": alerta}
 									}
 								} else {
 									errorGetAll = true
-									alertas = append(alertas, errTelefono.Error())
-									alerta.Code = "400"
-									alerta.Type = "error"
-									alerta.Body = alertas
-									c.Data["json"] = map[string]interface{}{"Response": alerta}
 								}
 							} else {
 								errorGetAll = true
-								alertas = append(alertas, "No data found")
-								alerta.Code = "404"
-								alerta.Type = "error"
-								alerta.Body = alertas
-								c.Data["json"] = map[string]interface{}{"Response": alerta}
 							}
 						} else {
 							errorGetAll = true
-							alertas = append(alertas, errTelefono.Error())
-							alerta.Code = "400"
-							alerta.Type = "error"
-							alerta.Body = alertas
-							c.Data["json"] = map[string]interface{}{"Response": alerta}
 						}
 					} else {
 						errorGetAll = true
-						alertas = append(alertas, "No data found")
-						alerta.Code = "404"
-						alerta.Type = "error"
-						alerta.Body = alertas
-						c.Data["json"] = map[string]interface{}{"Response": alerta}
 					}
 				} else {
 					errorGetAll = true
-					alertas = append(alertas, errParentesco.Error())
-					alerta.Code = "400"
-					alerta.Type = "error"
-					alerta.Body = alertas
-					c.Data["json"] = map[string]interface{}{"Response": alerta}
 				}
 
 				//PUT Correo (Info complementaria 53)
@@ -3367,67 +2576,27 @@ func (c *TerceroController) ActualizarInfoFamiliar() {
 												resultado["CorreoAlterno"] = CorreoPut["Dato"]
 											} else {
 												errorGetAll = true
-												alertas = append(alertas, "No data found")
-												alerta.Code = "404"
-												alerta.Type = "error"
-												alerta.Body = alertas
-												c.Data["json"] = map[string]interface{}{"Response": alerta}
 											}
 										} else {
 											errorGetAll = true
-											alertas = append(alertas, errCorreo.Error())
-											alerta.Code = "400"
-											alerta.Type = "error"
-											alerta.Body = alertas
-											c.Data["json"] = map[string]interface{}{"Response": alerta}
 										}
 									} else {
 										errorGetAll = true
-										alertas = append(alertas, "No data found")
-										alerta.Code = "404"
-										alerta.Type = "error"
-										alerta.Body = alertas
-										c.Data["json"] = map[string]interface{}{"Response": alerta}
 									}
 								} else {
 									errorGetAll = true
-									alertas = append(alertas, errCorreo.Error())
-									alerta.Code = "400"
-									alerta.Type = "error"
-									alerta.Body = alertas
-									c.Data["json"] = map[string]interface{}{"Response": alerta}
 								}
 							} else {
 								errorGetAll = true
-								alertas = append(alertas, "No data found")
-								alerta.Code = "404"
-								alerta.Type = "error"
-								alerta.Body = alertas
-								c.Data["json"] = map[string]interface{}{"Response": alerta}
 							}
 						} else {
 							errorGetAll = true
-							alertas = append(alertas, errCorreo.Error())
-							alerta.Code = "400"
-							alerta.Type = "error"
-							alerta.Body = alertas
-							c.Data["json"] = map[string]interface{}{"Response": alerta}
 						}
 					} else {
 						errorGetAll = true
-						alertas = append(alertas, "No data found")
-						alerta.Code = "404"
-						alerta.Type = "error"
-						alerta.Body = alertas
-						c.Data["json"] = map[string]interface{}{"Response": alerta}
 					}
 				} else {
 					errorGetAll = true
-					alertas = append(alertas, errCorreo.Error())
-					alerta.Code = "400"
-					alerta.Type = "error"
-					alerta.Body = alertas
-					c.Data["json"] = map[string]interface{}{"Response": alerta}
 				}
 
 				// PUT Direccion (Info complementaria 54)
@@ -3451,121 +2620,51 @@ func (c *TerceroController) ActualizarInfoFamiliar() {
 												resultado["DireccionAlterno"] = DireccionPut["Dato"]
 											} else {
 												errorGetAll = true
-												alertas = append(alertas, "No data found")
-												alerta.Code = "404"
-												alerta.Type = "error"
-												alerta.Body = alertas
-												c.Data["json"] = map[string]interface{}{"Response": alerta}
 											}
 										} else {
 											errorGetAll = true
-											alertas = append(alertas, errDireccion.Error())
-											alerta.Code = "400"
-											alerta.Type = "error"
-											alerta.Body = alertas
-											c.Data["json"] = map[string]interface{}{"Response": alerta}
 										}
 									} else {
 										errorGetAll = true
-										alertas = append(alertas, "No data found")
-										alerta.Code = "404"
-										alerta.Type = "error"
-										alerta.Body = alertas
-										c.Data["json"] = map[string]interface{}{"Response": alerta}
 									}
 								} else {
 									errorGetAll = true
-									alertas = append(alertas, errDireccion.Error())
-									alerta.Code = "400"
-									alerta.Type = "error"
-									alerta.Body = alertas
-									c.Data["json"] = map[string]interface{}{"Response": alerta}
 								}
 							} else {
 								errorGetAll = true
-								alertas = append(alertas, "No data found")
-								alerta.Code = "404"
-								alerta.Type = "error"
-								alerta.Body = alertas
-								c.Data["json"] = map[string]interface{}{"Response": alerta}
 							}
 						} else {
 							errorGetAll = true
-							alertas = append(alertas, errDireccion.Error())
-							alerta.Code = "400"
-							alerta.Type = "error"
-							alerta.Body = alertas
-							c.Data["json"] = map[string]interface{}{"Response": alerta}
 						}
 					} else {
 						errorGetAll = true
-						alertas = append(alertas, "No data found")
-						alerta.Code = "404"
-						alerta.Type = "error"
-						alerta.Body = alertas
-						c.Data["json"] = map[string]interface{}{"Response": alerta}
 					}
 				} else {
 					errorGetAll = true
-					alertas = append(alertas, errDireccion.Error())
-					alerta.Code = "400"
-					alerta.Type = "error"
-					alerta.Body = alertas
-					c.Data["json"] = map[string]interface{}{"Response": alerta}
 				}
 
 			} else {
 				errorGetAll = true
-				alertas = append(alertas, "No data found")
-				alerta.Code = "404"
-				alerta.Type = "error"
-				alerta.Body = alertas
-				c.Data["json"] = map[string]interface{}{"Response": alerta}
 			}
 		} else {
 			errorGetAll = true
-			alertas = append(alertas, errFamiliares.Error())
-			alerta.Code = "400"
-			alerta.Type = "error"
-			alerta.Body = alertas
-			c.Data["json"] = map[string]interface{}{"Response": alerta}
 		}
 	} else {
 		errorGetAll = true
-		alertas = append(alertas, err.Error())
-		alerta.Code = "400"
-		alerta.Type = "error"
-		alerta.Body = alertas
-		c.Data["json"] = map[string]interface{}{"Response": alerta}
 	}
 
 	if !errorGetAll {
-		alertas = append(alertas, resultado)
-		alerta.Code = "200"
-		alerta.Type = "OK"
-		alerta.Body = alertas
-		c.Data["json"] = map[string]interface{}{"Response": alerta}
+		return resultado, nil
 	}
 
-	c.ServeJSON()
+	return nil, errors.New("error del servicio ActualizarInfoFamiliar:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 }
 
-// ConsultarPersona ...
-// @Title ConsultarInfoSolicitante
-// @Description get ConsultarInfoSolicitante by id
-// @Param	tercero_id	path	int	true	"Id del tercero"
-// @Success 200 {}
-// @Failure 404 not found resource
-// @router /consultar_info_solicitante/:tercero_id [get]
-func (c *TerceroController) ConsultarInfoEstudiante() {
-	idStr := c.Ctx.Input.Param(":tercero_id")
+func ConsultarInfoEstudiante(idTercero string) (interface{}, error) {
 	resultado := make(map[string]interface{})
 	var persona []map[string]interface{}
-	var alerta models.Alert
-	alertas := []interface{}{}
-	var errorGetAll bool
 
-	errPersona := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"tercero?query=Id:"+idStr, &persona)
+	errPersona := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"tercero?query=Id:"+idTercero, &persona)
 	if errPersona == nil && fmt.Sprintf("%v", persona[0]) != "map[]" {
 		if persona[0]["Status"] != 404 {
 
@@ -3590,23 +2689,7 @@ func (c *TerceroController) ConsultarInfoEstudiante() {
 						panic(err)
 					}
 					resultado["CorreoPersonal"] = jsondata["Data"]
-				} else {
-					if correoPersonal[0]["Message"] == "Not found resource" {
-						c.Data["json"] = nil
-					} else {
-						alertas = append(alertas, "No data found")
-						alerta.Code = "404"
-						alerta.Type = "error"
-
-						c.Data["json"] = map[string]interface{}{"Response": alerta}
-					}
 				}
-			} else {
-				alertas = append(alertas, "No data found")
-				alerta.Code = "400"
-				alerta.Type = "error"
-
-				c.Data["json"] = map[string]interface{}{"Response": alerta}
 			}
 
 			errPrograma := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+fmt.Sprintf("%v", persona[0]["Id"])+",InfoComplementariaId__Id:95", &programa)
@@ -3624,23 +2707,7 @@ func (c *TerceroController) ConsultarInfoEstudiante() {
 					if fmt.Sprintf("%v", programaNombre[0]) != "map[]" {
 						resultado["Carrera"] = programaNombre[0]["Enfasis"][0]["ProyectoAcademicoInstitucionId"]["Nombre"]
 					}
-				} else {
-					if programa[0]["Message"] == "Not found resource" {
-						c.Data["json"] = nil
-					} else {
-						alertas = append(alertas, "No data found")
-						alerta.Code = "404"
-						alerta.Type = "error"
-
-						c.Data["json"] = map[string]interface{}{"Response": alerta}
-					}
 				}
-			} else {
-				alertas = append(alertas, "No data found")
-				alerta.Code = "400"
-				alerta.Type = "error"
-
-				c.Data["json"] = map[string]interface{}{"Response": alerta}
 			}
 
 			errTelefono := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+fmt.Sprintf("%v", persona[0]["Id"])+",InfoComplementariaId__Id:51", &telefono)
@@ -3653,43 +2720,14 @@ func (c *TerceroController) ConsultarInfoEstudiante() {
 					} else {
 						resultado["Telefono"] = jsondata["principal"]
 					}
-				} else {
-					if telefono[0]["Message"] == "Not found resource" {
-						c.Data["json"] = nil
-					} else {
-						alertas = append(alertas, "No data found")
-						alerta.Code = "404"
-						alerta.Type = "error"
-
-						c.Data["json"] = map[string]interface{}{"Response": alerta}
-					}
 				}
-			} else {
-				alertas = append(alertas, "No data found")
-				alerta.Code = "400"
-				alerta.Type = "error"
-				c.Data["json"] = map[string]interface{}{"Response": alerta}
 			}
 
 			errCodigoEst := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+fmt.Sprintf("%v", persona[0]["Id"])+",InfoComplementariaId__Id:93", &codigo)
 			if errCodigoEst == nil && fmt.Sprintf("%v", codigo[0]) != "map[]" {
 				if codigo[0]["Status"] != 404 {
 					resultado["Codigo"] = codigo[0]["Dato"]
-				} else {
-					if codigo[0]["Message"] == "Not found resource" {
-						c.Data["json"] = nil
-					} else {
-						alertas = append(alertas, "No data found")
-						alerta.Code = "404"
-						alerta.Type = "error"
-						c.Data["json"] = map[string]interface{}{"Response": alerta}
-					}
 				}
-			} else {
-				alertas = append(alertas, "No data found")
-				alerta.Code = "400"
-				alerta.Type = "error"
-				c.Data["json"] = map[string]interface{}{"Response": alerta}
 			}
 
 			errCorreoIns := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+fmt.Sprintf("%v", persona[0]["Id"])+",InfoComplementariaId__Id:94", &correoInstitucional)
@@ -3701,66 +2739,26 @@ func (c *TerceroController) ConsultarInfoEstudiante() {
 					}
 
 					resultado["CorreoInstitucional"] = jsondata["value"]
-				} else {
-					if correoInstitucional[0]["Message"] == "Not found resource" {
-						c.Data["json"] = nil
-					} else {
-						alertas = append(alertas, "No data found")
-						alerta.Code = "404"
-						alerta.Type = "error"
-						alerta.Body = alertas
-						c.Data["json"] = map[string]interface{}{"Response": alerta}
-					}
 				}
-			} else {
-				alertas = append(alertas, "No data found")
-				alerta.Code = "400"
-				alerta.Type = "error"
-				alerta.Body = alertas
-				c.Data["json"] = map[string]interface{}{"Response": alerta}
 			}
-
-			c.Data["json"] = resultado
+			return resultado, nil
 		} else {
-			if persona[0]["Message"] == "Not found resource" {
-				c.Data["json"] = nil
-			} else {
-				alertas = append(alertas, "No data found")
-				alerta.Code = "404"
-				alerta.Type = "error"
-				alerta.Body = alertas
-				c.Data["json"] = map[string]interface{}{"Response": alerta}
-			}
+			return nil, errors.New("error del servicio ConsultarInfoEstudiante:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 		}
 	} else {
-		logs.Error(errPersona)
-		errorGetAll = true
-		c.Data["json"] = map[string]interface{}{"Success": false, "Status": "404", "Message": "Data not found", "Data": nil}
+		logs.Error("Error --> ", errPersona)
+		return nil, errors.New("error del servicio ConsultarInfoEstudiante:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
 	}
-
-	if !errorGetAll {
-		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Request successful", "Data": resultado}
-	}
-
-	c.ServeJSON()
 }
 
-// GuardarAutor ...
-// @Title PostAutor
-// @Description Guardar autor
-// @Param	body		body 	{}	true		"body for Guardar autor content"
-// @Success 201 {int}
-// @Failure 400 the request contains incorrect syntax
-// @router /guardar_autor [post]
-func (c *TerceroController) GuardarAutor() {
-
+func GuardarAutor(data []byte) (interface{}, error) {
 	//resultado solicitud de descuento
 	var resultado map[string]interface{}
 	//solicitud de descuento
 	var tercero map[string]interface{}
 	var terceroPost map[string]interface{}
 
-	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &tercero); err == nil {
+	if err := json.Unmarshal(data, &tercero); err == nil {
 		guardarpersona := map[string]interface{}{
 			"NombreCompleto":      tercero["NombreCompleto"].(string),
 			"Activo":              false,
@@ -3789,116 +2787,29 @@ func (c *TerceroController) GuardarAutor() {
 
 						resultado["NumeroIdentificacion"] = identificacion["Numero"]
 						resultado["TipoIdentificacionId"] = identificacion["TipoDocumentoId"].(map[string]interface{})["Id"]
-						c.Data["json"] = resultado
+						return resultado, nil
 
 					} else {
 						//Si pasa un error borra todo lo creado al momento del registro del documento de identidad
 						var resultado2 map[string]interface{}
 						request.SendJson(fmt.Sprintf("http://"+beego.AppConfig.String("TercerosService")+"tercero/%.f", terceroPost["Id"]), "DELETE", &resultado2, nil)
-						logs.Error(errIdentificacion)
-						c.Data["system"] = identificacion
-						c.Abort("400")
+						logs.Error("Error --> ", errIdentificacion)
+						return nil, errors.New("error del servicio GuardarAutor")
 					}
 				} else {
-					logs.Error(errIdentificacion)
-					c.Data["system"] = identificacion
-					c.Abort("400")
+					logs.Error("Error --> ", errIdentificacion)
+					return nil, errors.New("error del servicio GuardarAutor")
 				}
 			} else {
-				logs.Error(errPersona)
-				c.Data["system"] = terceroPost
-				c.Abort("400")
+				logs.Error("Error --> ", errPersona)
+				return nil, errors.New("error del servicio GuardarAutor")
 			}
 		} else {
-			logs.Error(errPersona)
-			c.Data["system"] = terceroPost
-			c.Abort("400")
+			logs.Error("Error --> ", errPersona)
+			return nil, errors.New("error del servicio GuardarAutor")
 		}
 	} else {
-		logs.Error(err)
-		c.Data["system"] = err
-		c.Abort("400")
+		logs.Error("Error --> ", err)
+		return nil, errors.New("error del servicio GuardarAutor")
 	}
-	c.ServeJSON()
-}
-
-// ObtenerTercerosConNIT maneja la solicitud para obtener una lista de terceros.
-// La búsqueda se puede realizar tanto por el NIT (Número de Identificación Tributaria) como por el nombre completo.
-// Si se busca por NIT, la función intenta encontrar coincidencias en los números de identificación.
-// Si se busca por nombre, intenta encontrar coincidencias en los nombres completos de los terceros.
-// La función retorna una lista de terceros, cada uno con su NIT, nombre completo, y un label.
-// Este label es una combinación del NIT y el nombre, dependiendo del tipo de búsqueda realizada.
-// @Title ObtenerTerceroConNIT
-// @Description Retorna una lista de terceros con su NIT y nombre completo.
-//                La búsqueda puede realizarse por NIT o por nombre completo.
-//                El resultado incluye un label que es una combinación de NIT y nombre, dependiendo del criterio de búsqueda.
-// @Success 200 {array} TerceroConNIT "Lista de terceros con NIT, nombre completo y label correspondiente."
-// @Failure 400 "bad request" en caso de una solicitud incorrecta o problemas en la consulta.
-// @router /consultar_terceros_con_nit [get]
-func (c *TerceroController) ObtenerTercerosConNIT() {
-	var query string
-	var queryUrl string
-	// order: desc,asc
-	if v := c.GetString("query"); v != "" {
-		query = url.QueryEscape(v)
-	}
-	// Se arma la query
-	if query != "" {
-		if esNumerico(query) {
-			// Búsqueda por número
-			queryUrl = "datos_identificacion?query=TipoDocumentoId:7,Numero__icontains:" + query
-		} else {
-			// Búsqueda por nombre
-			queryUrl = "datos_identificacion?query=TipoDocumentoId:7,TerceroId.NombreCompleto__icontains:" + query
-		}
-	} else {
-		queryUrl = "datos_identificacion?query=TipoDocumentoId:7&limit=0"
-	}
-
-	var tercerosConNIT []map[string]interface{}
-	//Consultar terceros con nit
-	errTerceroConNIT := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+queryUrl, &tercerosConNIT)
-	if errTerceroConNIT == nil {
-		if tercerosConNIT != nil && len(tercerosConNIT) > 0 {
-			type TerceroConNIT struct {
-				NIT            string `json:"NIT"`
-				NombreCompleto string `json:"NombreCompleto"`
-				Label          string `json:"Label"`
-			}
-			var resultado []TerceroConNIT
-			for _, tercero := range tercerosConNIT {
-				if terceroData, ok := tercero["TerceroId"].(map[string]interface{}); ok {
-					var label string
-					if esNumerico(query) {
-						label = tercero["Numero"].(string) + " - " + terceroData["NombreCompleto"].(string)
-					} else {
-						label = terceroData["NombreCompleto"].(string) + " - " + tercero["Numero"].(string)
-					}
-
-					terceroConNIT := TerceroConNIT{
-						NombreCompleto: terceroData["NombreCompleto"].(string),
-						NIT:            tercero["Numero"].(string),
-						Label:          label,
-					}
-					resultado = append(resultado, terceroConNIT)
-				}
-			}
-			c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Request successful", "Data": resultado}
-		}
-	} else {
-		logs.Error(errTerceroConNIT)
-		c.Data["json"] = map[string]interface{}{"Success": false, "Status": "404", "Message": "Data not found", "Data": nil}
-		c.Data["system"] = errTerceroConNIT
-		c.Abort("404")
-	}
-	c.ServeJSON()
-}
-
-func esNumerico(s string) bool {
-	for _, r := range s {
-		if !unicode.IsDigit(r) {
-			return false
-		}
-	}
-	return true
 }
