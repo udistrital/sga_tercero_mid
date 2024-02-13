@@ -8,6 +8,7 @@ import (
 func init() {
 
     beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"],
+    beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"] = append(beego.GlobalControllerRouter["github.com/udistrital/sga_mid_tercero/controllers:TerceroController"],
         beego.ControllerComments{
             Method: "GuardarPersona",
             Router: "/",
