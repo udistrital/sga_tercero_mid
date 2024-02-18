@@ -1,7 +1,7 @@
 package main
 
 import (
-	_ "github.com/udistrital/sga_mid_tercero/routers"
+	_ "github.com/udistrital/sga_tercero_mid/routers"
 
 	apistatus "github.com/udistrital/utils_oas/apiStatusLib"
 

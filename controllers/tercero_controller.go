@@ -6,7 +6,7 @@ import (
 
 	"github.com/astaxie/beego"
 	"github.com/beego/beego/logs"
-	"github.com/udistrital/sga_mid_tercero/services"
+	"github.com/udistrital/sga_tercero_mid/services"
 	"github.com/udistrital/utils_oas/errorhandler"
 	"github.com/udistrital/utils_oas/request"
 	"github.com/udistrital/utils_oas/requestresponse"
