@@ -18,7 +18,7 @@ func init() {
 	beego.ErrorController(&errorhandler.ErrorHandlerController{})
 
 	ns := beego.NewNamespace("/v1",
-		beego.NSNamespace("/persona",
+		beego.NSNamespace("/personas",
 			beego.NSInclude(
 				&controllers.TerceroController{},
 			),

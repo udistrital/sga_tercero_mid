@@ -15,10 +15,10 @@
     },
     "basePath": "/v1",
     "paths": {
-        "/persona/": {
+        "/personas/": {
             "put": {
                 "tags": [
-                    "persona"
+                    "personas"
                 ],
                 "description": "Actualizar datos de persona",
                 "operationId": "TerceroController.ActualizarPersona",
@@ -44,7 +44,7 @@
             },
             "post": {
                 "tags": [
-                    "persona"
+                    "personas"
                 ],
                 "description": "Guardar Persona",
                 "operationId": "TerceroController.PostPersona",
@@ -69,10 +69,10 @@
                 }
             }
         },
-        "/persona/autores": {
+        "/personas/autores": {
             "post": {
                 "tags": [
-                    "persona"
+                    "personas"
                 ],
                 "description": "Guardar autor",
                 "operationId": "TerceroController.PostAutor",
@@ -97,10 +97,10 @@
                 }
             }
         },
-        "/persona/complementarios": {
+        "/personas/complementarios": {
             "put": {
                 "tags": [
-                    "persona"
+                    "personas"
                 ],
                 "description": "ActualizarDatosComplementarios",
                 "operationId": "TerceroController.ActualizarDatosComplementarios",
@@ -126,7 +126,7 @@
             },
             "post": {
                 "tags": [
-                    "persona"
+                    "personas"
                 ],
                 "description": "Guardar Datos Complementarios Persona",
                 "operationId": "TerceroController.GuardarDatosComplementarios",
@@ -151,10 +151,10 @@
                 }
             }
         },
-        "/persona/complementarios-par": {
+        "/personas/complementarios-par-academico": {
             "post": {
                 "tags": [
-                    "persona"
+                    "personas"
                 ],
                 "description": "Guardar Datos Complementarios Persona ParAcademico",
                 "operationId": "TerceroController.GuardarDatosComplementariosParAcademico",
@@ -179,33 +179,10 @@
                 }
             }
         },
-        "/persona/consultar_terceros_con_nit": {
-            "get": {
-                "tags": [
-                    "persona"
-                ],
-                "description": "Retorna una lista de terceros con su NIT y nombre completo.",
-                "operationId": "TerceroController.ObtenerTerceroConNIT",
-                "responses": {
-                    "200": {
-                        "description": "\"Lista de terceros con NIT, nombre completo y label correspondiente.\"",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/TerceroConNIT"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "\"bad request\" en caso de una solicitud incorrecta o problemas en la consulta."
-                    }
-                }
-            }
-        },
-        "/persona/contacto": {
+        "/personas/contacto": {
             "post": {
                 "tags": [
-                    "persona"
+                    "personas"
                 ],
                 "description": "Guardar DatosContacto",
                 "operationId": "TerceroController.PostrDatosContacto",
@@ -230,10 +207,10 @@
                 }
             }
         },
-        "/persona/existencia/{numeroDocumento}": {
+        "/personas/existencia/{numeroDocumento}": {
             "get": {
                 "tags": [
-                    "persona"
+                    "personas"
                 ],
                 "description": "get ConsultarExistenciaPersona by NumeroIdentificacion",
                 "operationId": "TerceroController.ConsultarExistenciaPersona",
@@ -257,10 +234,10 @@
                 }
             }
         },
-        "/persona/info-familiar": {
+        "/personas/info-familiar": {
             "put": {
                 "tags": [
-                    "persona"
+                    "personas"
                 ],
                 "description": "Actualiza la informacion familiar del tercero",
                 "operationId": "TerceroController.ActualizarInfoFamiliar",
@@ -285,10 +262,33 @@
                 }
             }
         },
-        "/persona/{tercero_id}": {
+        "/personas/nit": {
             "get": {
                 "tags": [
-                    "persona"
+                    "personas"
+                ],
+                "description": "Retorna una lista de terceros con su NIT y nombre completo.",
+                "operationId": "TerceroController.ObtenerTerceroConNIT",
+                "responses": {
+                    "200": {
+                        "description": "\"Lista de terceros con NIT, nombre completo y label correspondiente.\"",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/TerceroConNIT"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "\"bad request\" en caso de una solicitud incorrecta o problemas en la consulta."
+                    }
+                }
+            }
+        },
+        "/personas/{tercero_id}": {
+            "get": {
+                "tags": [
+                    "personas"
                 ],
                 "description": "get ConsultaPersona by id",
                 "operationId": "TerceroController.ConsultarPersona",
@@ -312,10 +312,10 @@
                 }
             }
         },
-        "/persona/{tercero_id}/complementarios": {
+        "/personas/{tercero_id}/complementarios": {
             "get": {
                 "tags": [
-                    "persona"
+                    "personas"
                 ],
                 "description": "get ConsultarDatosComplementarios by id",
                 "operationId": "TerceroController.ConsultarDatosComplementarios",
@@ -339,10 +339,10 @@
                 }
             }
         },
-        "/persona/{tercero_id}/contacto": {
+        "/personas/{tercero_id}/contacto": {
             "get": {
                 "tags": [
-                    "persona"
+                    "personas"
                 ],
                 "description": "get ConsultarDatosContacto by id",
                 "operationId": "TerceroController.ConsultarDatosContacto",
@@ -366,10 +366,10 @@
                 }
             }
         },
-        "/persona/{tercero_id}/familiar": {
+        "/personas/{tercero_id}/familiar": {
             "get": {
                 "tags": [
-                    "persona"
+                    "personas"
                 ],
                 "description": "get ConsultarDatosFamiliar by id",
                 "operationId": "TerceroController.ConsultarDatosFamiliar",
@@ -393,10 +393,10 @@
                 }
             }
         },
-        "/persona/{tercero_id}/formacion-pregrado": {
+        "/personas/{tercero_id}/formacion-pregrado": {
             "get": {
                 "tags": [
-                    "persona"
+                    "personas"
                 ],
                 "description": "get ConsultarDatosFormacionPregrado by id",
                 "operationId": "TerceroController.ConsultarDatosFormacionPregrado",
@@ -420,10 +420,10 @@
                 }
             }
         },
-        "/persona/{tercero_id}/info-solicitante": {
+        "/personas/{tercero_id}/info-solicitante": {
             "get": {
                 "tags": [
-                    "persona"
+                    "personas"
                 ],
                 "description": "get ConsultarInfoSolicitante by id",
                 "operationId": "TerceroController.ConsultarInfoSolicitante",
@@ -460,7 +460,7 @@
     },
     "tags": [
         {
-            "name": "persona",
+            "name": "personas",
             "description": "TerceroController operations for Tercero\n"
         }
     ]

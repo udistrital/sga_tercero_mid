@@ -118,7 +118,7 @@ func (c *TerceroController) GuardarDatosComplementarios() {
 // @Param	body		body 	{}	true		"body for Guardar Datos Complementarios Persona content"
 // @Success 201 {int}
 // @Failure 400 the request contains incorrect syntax
-// @router /complementarios-par [post]
+// @router /complementarios-par-academico [post]
 func (c *TerceroController) GuardarDatosComplementariosParAcademico() {
 	defer errorhandler.HandlePanic(&c.Controller)
 
@@ -430,7 +430,7 @@ func (c *TerceroController) GuardarAutor() {
 //
 // @Success 200 {array} TerceroConNIT "Lista de terceros con NIT, nombre completo y label correspondiente."
 // @Failure 400 "bad request" en caso de una solicitud incorrecta o problemas en la consulta.
-// @router /consultar_terceros_con_nit [get]
+// @router /nit [get]
 func (c *TerceroController) ObtenerTercerosConNIT() {
 	var query string
 	var queryUrl string
