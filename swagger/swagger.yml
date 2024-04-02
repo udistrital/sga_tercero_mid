@@ -11,10 +11,10 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
 basePath: /v1
 paths:
-  /persona/:
+  /personas/:
     put:
       tags:
-      - persona
+      - personas
       description: Actualizar datos de persona
       operationId: TerceroController.ActualizarPersona
       parameters:
@@ -31,7 +31,7 @@ paths:
           description: body is empty
     post:
       tags:
-      - persona
+      - personas
       description: Guardar Persona
       operationId: TerceroController.PostPersona
       parameters:
@@ -46,10 +46,10 @@ paths:
           description: '{int}'
         "400":
           description: the request contains incorrect syntax
-  /persona/{tercero_id}:
+  /personas/{tercero_id}:
     get:
       tags:
-      - persona
+      - personas
       description: get ConsultaPersona by id
       operationId: TerceroController.ConsultarPersona
       parameters:
@@ -64,10 +64,10 @@ paths:
           description: '{}'
         "404":
           description: not found resource
-  /persona/{tercero_id}/complementarios:
+  /personas/{tercero_id}/complementarios:
     get:
       tags:
-      - persona
+      - personas
       description: get ConsultarDatosComplementarios by id
       operationId: TerceroController.ConsultarDatosComplementarios
       parameters:
@@ -82,10 +82,10 @@ paths:
           description: '{}'
         "404":
           description: not found resource
-  /persona/{tercero_id}/contacto:
+  /personas/{tercero_id}/contacto:
     get:
       tags:
-      - persona
+      - personas
       description: get ConsultarDatosContacto by id
       operationId: TerceroController.ConsultarDatosContacto
       parameters:
@@ -100,10 +100,10 @@ paths:
           description: '{}'
         "404":
           description: not found resource
-  /persona/{tercero_id}/familiar:
+  /personas/{tercero_id}/familiar:
     get:
       tags:
-      - persona
+      - personas
       description: get ConsultarDatosFamiliar by id
       operationId: TerceroController.ConsultarDatosFamiliar
       parameters:
@@ -118,10 +118,10 @@ paths:
           description: '{}'
         "404":
           description: not found resource
-  /persona/{tercero_id}/formacion-pregrado:
+  /personas/{tercero_id}/formacion-pregrado:
     get:
       tags:
-      - persona
+      - personas
       description: get ConsultarDatosFormacionPregrado by id
       operationId: TerceroController.ConsultarDatosFormacionPregrado
       parameters:
@@ -136,10 +136,10 @@ paths:
           description: '{}'
         "404":
           description: not found resource
-  /persona/{tercero_id}/info-solicitante:
+  /personas/{tercero_id}/info-solicitante:
     get:
       tags:
-      - persona
+      - personas
       description: get ConsultarInfoSolicitante by id
       operationId: TerceroController.ConsultarInfoSolicitante
       parameters:
@@ -154,10 +154,10 @@ paths:
           description: '{}'
         "404":
           description: not found resource
-  /persona/autores:
+  /personas/autores:
     post:
       tags:
-      - persona
+      - personas
       description: Guardar autor
       operationId: TerceroController.PostAutor
       parameters:
@@ -172,10 +172,10 @@ paths:
           description: '{int}'
         "400":
           description: the request contains incorrect syntax
-  /persona/complementarios:
+  /personas/complementarios:
     put:
       tags:
-      - persona
+      - personas
       description: ActualizarDatosComplementarios
       operationId: TerceroController.ActualizarDatosComplementarios
       parameters:
@@ -192,7 +192,7 @@ paths:
           description: body is empty
     post:
       tags:
-      - persona
+      - personas
       description: Guardar Datos Complementarios Persona
       operationId: TerceroController.GuardarDatosComplementarios
       parameters:
@@ -207,10 +207,10 @@ paths:
           description: '{int}'
         "400":
           description: the request contains incorrect syntax
-  /persona/complementarios-par:
+  /personas/complementarios-par-academico:
     post:
       tags:
-      - persona
+      - personas
       description: Guardar Datos Complementarios Persona ParAcademico
       operationId: TerceroController.GuardarDatosComplementariosParAcademico
       parameters:
@@ -225,25 +225,10 @@ paths:
           description: '{int}'
         "400":
           description: the request contains incorrect syntax
-  /persona/consultar_terceros_con_nit:
-    get:
-      tags:
-      - persona
-      description: Retorna una lista de terceros con su NIT y nombre completo.
-      operationId: TerceroController.ObtenerTerceroConNIT
-      responses:
-        "200":
-          description: '"Lista de terceros con NIT, nombre completo y label correspondiente."'
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/TerceroConNIT'
-        "400":
-          description: '"bad request" en caso de una solicitud incorrecta o problemas en la consulta.'
-  /persona/contacto:
+  /personas/contacto:
     post:
       tags:
-      - persona
+      - personas
       description: Guardar DatosContacto
       operationId: TerceroController.PostrDatosContacto
       parameters:
@@ -258,10 +243,10 @@ paths:
           description: '{int}'
         "400":
           description: the request contains incorrect syntax
-  /persona/existencia/{numeroDocumento}:
+  /personas/existencia/{numeroDocumento}:
     get:
       tags:
-      - persona
+      - personas
       description: get ConsultarExistenciaPersona by NumeroIdentificacion
       operationId: TerceroController.ConsultarExistenciaPersona
       parameters:
@@ -276,10 +261,10 @@ paths:
           description: '{}'
         "404":
           description: not found resource
-  /persona/info-familiar:
+  /personas/info-familiar:
     put:
       tags:
-      - persona
+      - personas
       description: Actualiza la informacion familiar del tercero
       operationId: TerceroController.ActualizarInfoFamiliar
       parameters:
@@ -294,6 +279,21 @@ paths:
           description: '{}'
         "403":
           description: body is empty
+  /personas/nit:
+    get:
+      tags:
+      - personas
+      description: Retorna una lista de terceros con su NIT y nombre completo.
+      operationId: TerceroController.ObtenerTerceroConNIT
+      responses:
+        "200":
+          description: '"Lista de terceros con NIT, nombre completo y label correspondiente."'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/TerceroConNIT'
+        "400":
+          description: '"bad request" en caso de una solicitud incorrecta o problemas en la consulta.'
 definitions:
   '{}':
     title: '{}'
@@ -302,6 +302,6 @@ definitions:
     title: TerceroConNIT
     type: object
 tags:
-- name: persona
+- name: personas
   description: |
     TerceroController operations for Tercero
