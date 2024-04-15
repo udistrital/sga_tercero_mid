@@ -2813,3 +2813,738 @@ func GuardarAutor(data []byte) (interface{}, error) {
 		return nil, errors.New("error del servicio GuardarAutor")
 	}
 }
+
+func ConsultarDatosAcudiente(idTercero string) (interface{}, error) {
+
+	fmt.Println("Idddddddddd", idTercero)
+
+	type Data struct {
+		Nombre            string `json:"nombre"`
+		Parentezco        string `json:"parentezco"`
+		Correo            string `json:"correo"`
+		Direccion         string `json:"direccion"`
+		Telefono          string `json:"telefono"`
+		NombreSegundo     string `json:"nombreSegundo"`
+		ParentezcoSegundo string `json:"parentezcoSegundo"`
+		CorreoSegundo     string `json:"correoSegundo"`
+		DireccionSegundo  string `json:"direccionSegundo"`
+		TelefonoSegundo   string `json:"telefonoSegundo"`
+	}
+
+	type GrupoInfo []struct {
+		ID int `json:"Id"`
+	}
+
+	type InfoComplementaria []struct {
+		ID                int    `json:"Id"`
+		CodigoAbreviacion string `json:"CodigoAbreviacion"`
+	}
+
+	type InfoComplementariaTercero []struct {
+		ID                   int    `json:"Id"`
+		Dato                 string `json:"Dato"`
+		InfoComplementariaId struct {
+			CodigoAbreviacion string `json:"CodigoAbreviacion"`
+		} `json:"InfoComplementariaId"`
+	}
+
+	// Obtener Id del grupo mediante el codigo de abreviacion
+
+	idGrupo := helpers.SendRequestToCRUDAPI("http://"+beego.AppConfig.String("TercerosService")+"/grupo_info_complementaria?limit=0&query=CodigoAbreviacion:DATOS_CONT_ACU&query=Activo:true", nil, "GET")
+	if idGrupo.Err != nil {
+		logs.Error("Error al obtener las etiquetas asociadas a la noticia:", idGrupo.Err)
+		return nil, errors.New("error del servicio GuardarDatosAcudiente")
+	} else {
+
+	}
+
+	var idGrupoResp GrupoInfo
+	if err := json.Unmarshal(idGrupo.Body, &idGrupoResp); err != nil {
+		logs.Error("Error al decodificar la respuesta de la API CRUD para Noticia:", err)
+	}
+
+	// fmt.Println("IDDDDDDDDDDDDDDDDD", idGrupoResp[0].ID)
+
+	// Obtener Id de la info complementaria mediante el id del grupo
+
+	idInfoComplementaria := helpers.SendRequestToCRUDAPI("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria?limit=0&query=GrupoInfoComplementariaId.Id:"+strconv.Itoa(idGrupoResp[0].ID)+"&query=Activo:true", nil, "GET")
+	if idInfoComplementaria.Err != nil {
+		logs.Error("Error al obtener las etiquetas asociadas a la noticia:", idInfoComplementaria.Err)
+	}
+
+	var idInfoComplementariaResp InfoComplementaria
+	if err := json.Unmarshal(idInfoComplementaria.Body, &idInfoComplementariaResp); err != nil {
+		logs.Error("Error al decodificar la respuesta de la API CRUD para Noticia:", err)
+	}
+
+	// fmt.Println("INFOOOOOOOOOOOOOOOOOOOOOOO", idInfoComplementariaResp[0])
+
+	id, _ := strconv.Atoi(idTercero)
+	query := "&query=TerceroId.Id:" + strconv.Itoa(id) + ",InfoComplementariaId.GrupoInfoComplementariaId.Id:" + strconv.Itoa(idGrupoResp[0].ID)
+	informacionTablaRompimineto := helpers.SendRequestToCRUDAPI("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero?limit=0"+query, nil, "GET")
+	if informacionTablaRompimineto.Err != nil {
+		logs.Error("Error al obtener las etiquetas asociadas a la noticia:", informacionTablaRompimineto.Err)
+		return nil, errors.New("error del servicio GuardarDatosAcudiente")
+	}
+
+	var informacionTablaRompiminetoResp InfoComplementariaTercero
+	if err := json.Unmarshal(informacionTablaRompimineto.Body, &informacionTablaRompiminetoResp); err != nil {
+		logs.Error("Error al decodificar la respuesta de la API CRUD para Noticia:", err)
+	}
+
+	fmt.Println("INFOOOOOOOOOOOOOOO", informacionTablaRompiminetoResp)
+
+	return informacionTablaRompiminetoResp, nil
+}
+
+func GuardarDatosAcudiente(idTercero string, data []byte) (interface{}, error) {
+	fmt.Println("Idddddddddd", idTercero)
+	fmt.Println("dataaaaaaaa", string(data))
+
+	type Data struct {
+		Nombre            string `json:"nombre"`
+		Parentezco        string `json:"parentezco"`
+		Correo            string `json:"correo"`
+		Direccion         string `json:"direccion"`
+		Telefono          string `json:"telefono"`
+		NombreSegundo     string `json:"nombreSegundo"`
+		ParentezcoSegundo string `json:"parentezcoSegundo"`
+		CorreoSegundo     string `json:"correoSegundo"`
+		DireccionSegundo  string `json:"direccionSegundo"`
+		TelefonoSegundo   string `json:"telefonoSegundo"`
+	}
+
+	var datos Data
+	if err := json.Unmarshal(data, &datos); err != nil {
+		log.Fatal(err)
+	}
+
+	type GrupoInfo []struct {
+		ID int `json:"Id"`
+	}
+
+	type InfoComplementaria []struct {
+		ID                int    `json:"Id"`
+		CodigoAbreviacion string `json:"CodigoAbreviacion"`
+	}
+
+	// Obtener Id del grupo mediante el codigo de abreviacion
+
+	idGrupo := helpers.SendRequestToCRUDAPI("http://"+beego.AppConfig.String("TercerosService")+"/grupo_info_complementaria?limit=0&query=CodigoAbreviacion:DATOS_CONT_ACU&query=Activo:true", nil, "GET")
+	if idGrupo.Err != nil {
+		logs.Error("Error al obtener las etiquetas asociadas a la noticia:", idGrupo.Err)
+		return nil, errors.New("error del servicio GuardarDatosAcudiente")
+	} else {
+
+	}
+
+	var idGrupoResp GrupoInfo
+	if err := json.Unmarshal(idGrupo.Body, &idGrupoResp); err != nil {
+		logs.Error("Error al decodificar la respuesta de la API CRUD para Noticia:", err)
+	}
+
+	fmt.Println("IDDDDDDDDDDDDDDDDD", idGrupoResp[0].ID)
+
+	// Obtener Id de la info complementaria mediante el id del grupo
+
+	idInfoComplementaria := helpers.SendRequestToCRUDAPI("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria?limit=0&query=GrupoInfoComplementariaId.Id:"+strconv.Itoa(idGrupoResp[0].ID)+"&query=Activo:true", nil, "GET")
+	if idInfoComplementaria.Err != nil {
+		logs.Error("Error al obtener las etiquetas asociadas a la noticia:", idInfoComplementaria.Err)
+	}
+
+	var idInfoComplementariaResp InfoComplementaria
+	if err := json.Unmarshal(idInfoComplementaria.Body, &idInfoComplementariaResp); err != nil {
+		logs.Error("Error al decodificar la respuesta de la API CRUD para Noticia:", err)
+	}
+
+	fmt.Println("INFOOOOOOOOOOOOOOOOOOOOOOO", idInfoComplementariaResp[0])
+
+	// Guardar datos del acudiente
+
+	// Almacena los datos en una slice
+	datosSlice := []string{
+		datos.Nombre,
+		datos.Parentezco,
+		datos.Correo,
+		datos.Direccion,
+		datos.Telefono,
+		datos.NombreSegundo,
+		datos.ParentezcoSegundo,
+		datos.CorreoSegundo,
+		datos.DireccionSegundo,
+		datos.TelefonoSegundo,
+	}
+
+	// Asegúrate de que hay suficientes elementos en idInfoComplementariaResp
+	if len(idInfoComplementariaResp) < len(datosSlice) {
+		log.Fatal("No hay suficientes elementos en idInfoComplementariaResp")
+	}
+
+	for i, element := range idInfoComplementariaResp {
+
+		id, _ := strconv.Atoi(idTercero)
+
+		newInfo := map[string]interface{}{
+			"TerceroId":            map[string]interface{}{"Id": id},
+			"InfoComplementariaId": map[string]interface{}{"Id": element.ID},
+			"Dato":                 fmt.Sprintf("{\"Dato\": \"%s\"}", datosSlice[i]),
+			"Activo":               true,
+		}
+
+		// 	// Guardar en la base de datos
+		apiResp := helpers.SendRequestToCRUDAPI("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero", newInfo, "POST")
+		if apiResp.Err != nil {
+			logs.Error("Error al enviar la solicitud a la API CRUD", apiResp.Err)
+		}
+
+		// 	// fmt.Println("Elemento", apiResp.Err)
+	}
+
+	return nil, nil
+}
+
+func ActualizarDatosAcudiente(idTercero string, data []byte) (interface{}, error) {
+	// fmt.Println("Idddddddddd", idTercero)
+	fmt.Println("dataaaaaaaa", string(data))
+
+	fmt.Println("Actualizarrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr")
+
+	type Data struct {
+		Nombre            string `json:"nombre"`
+		Parentezco        string `json:"parentezco"`
+		Correo            string `json:"correo"`
+		Direccion         string `json:"direccion"`
+		Telefono          string `json:"telefono"`
+		NombreSegundo     string `json:"nombreSegundo"`
+		ParentezcoSegundo string `json:"parentezcoSegundo"`
+		CorreoSegundo     string `json:"correoSegundo"`
+		DireccionSegundo  string `json:"direccionSegundo"`
+		TelefonoSegundo   string `json:"telefonoSegundo"`
+	}
+
+	var datos Data
+	if err := json.Unmarshal(data, &datos); err != nil {
+		log.Fatal(err)
+	}
+
+	type GrupoInfo []struct {
+		ID int `json:"Id"`
+	}
+
+	type InfoComplementaria []struct {
+		ID                int    `json:"Id"`
+		CodigoAbreviacion string `json:"CodigoAbreviacion"`
+	}
+
+	type InfoComplementariaTercero []struct {
+		ID                   int    `json:"Id"`
+		Dato                 string `json:"Dato"`
+		InfoComplementariaId struct {
+			CodigoAbreviacion string `json:"CodigoAbreviacion"`
+		} `json:"InfoComplementariaId"`
+	}
+
+	// Obtener Id del grupo mediante el codigo de abreviacion
+	idGrupo := helpers.SendRequestToCRUDAPI("http://"+beego.AppConfig.String("TercerosService")+"/grupo_info_complementaria?limit=0&query=CodigoAbreviacion:DATOS_CONT_ACU&query=Activo:true", nil, "GET")
+	if idGrupo.Err != nil {
+		logs.Error("Error al obtener las etiquetas asociadas a la noticia:", idGrupo.Err)
+		return nil, errors.New("error del servicio ActualizarDatosAcudiente")
+	}
+
+	var idGrupoResp GrupoInfo
+	if err := json.Unmarshal(idGrupo.Body, &idGrupoResp); err != nil {
+		logs.Error("Error al decodificar la respuesta de la API CRUD para Noticia:", err)
+	}
+
+	// Obtener Id de la info complementaria mediante el id del grupo
+	idInfoComplementaria := helpers.SendRequestToCRUDAPI("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria?limit=0&query=GrupoInfoComplementariaId.Id:"+strconv.Itoa(idGrupoResp[0].ID)+"&query=Activo:true", nil, "GET")
+	if idInfoComplementaria.Err != nil {
+		logs.Error("Error al obtener las etiquetas asociadas a la noticia:", idInfoComplementaria.Err)
+	}
+
+	var idInfoComplementariaResp InfoComplementaria
+	if err := json.Unmarshal(idInfoComplementaria.Body, &idInfoComplementariaResp); err != nil {
+		logs.Error("Error al decodificar la respuesta de la API CRUD para Noticia:", err)
+	}
+
+	// Actualizar datos del acudiente
+	datosSlice := []string{
+		datos.Nombre,
+		datos.Parentezco,
+		datos.Correo,
+		datos.Direccion,
+		datos.Telefono,
+		datos.NombreSegundo,
+		datos.ParentezcoSegundo,
+		datos.CorreoSegundo,
+		datos.DireccionSegundo,
+		datos.TelefonoSegundo,
+	}
+
+	// Asegúrate de que hay suficientes elementos en idInfoComplementariaResp
+	if len(idInfoComplementariaResp) < len(datosSlice) {
+		log.Fatal("No hay suficientes elementos en idInfoComplementariaResp")
+	}
+
+	id, _ := strconv.Atoi(idTercero)
+	query := "&query=TerceroId.Id:" + strconv.Itoa(id) + ",InfoComplementariaId.GrupoInfoComplementariaId.Id:" + strconv.Itoa(idGrupoResp[0].ID)
+	informacionTablaRompimineto := helpers.SendRequestToCRUDAPI("http://"+beego.AppConfig.String("TercerosService")+"/info_complementaria_tercero?limit=0"+query, nil, "GET")
+	if informacionTablaRompimineto.Err != nil {
+		logs.Error("Error al obtener las etiquetas asociadas a la noticia:", informacionTablaRompimineto.Err)
+		return nil, errors.New("error del servicio GuardarDatosAcudiente")
+	}
+
+	var informacionTablaRompiminetoResp InfoComplementariaTercero
+	if err := json.Unmarshal(informacionTablaRompimineto.Body, &informacionTablaRompiminetoResp); err != nil {
+		logs.Error("Error al decodificar la respuesta de la API CRUD para Noticia:", err)
+	}
+
+	// fmt.Println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", informacionTablaRompiminetoResp[0].InfoComplementariaId.CodigoAbreviacion)
+
+	for i, element := range idInfoComplementariaResp {
+		idPut := 0
+		switch informacionTablaRompiminetoResp[i].InfoComplementariaId.CodigoAbreviacion {
+		case "NOM_PRI_ACU":
+			idPut = informacionTablaRompiminetoResp[i].ID
+		case "PAREN_PRI_ACU":
+			idPut = informacionTablaRompiminetoResp[i].ID
+		case "CORREO_PRI_ACU":
+			idPut = informacionTablaRompiminetoResp[i].ID
+		case "DIREC_PRI_ACU":
+			idPut = informacionTablaRompiminetoResp[i].ID
+		case "TEL_PRI_ACU":
+			idPut = informacionTablaRompiminetoResp[i].ID
+		case "NOM_SEG_ACU":
+			idPut = informacionTablaRompiminetoResp[i].ID
+		case "PAREN_SEG_ACU":
+			idPut = informacionTablaRompiminetoResp[i].ID
+		case "CORREO_SEG_ACU":
+			idPut = informacionTablaRompiminetoResp[i].ID
+		case "DIREC_SEG_ACU":
+			idPut = informacionTablaRompiminetoResp[i].ID
+		case "TEL_SEG_ACU":
+			idPut = informacionTablaRompiminetoResp[i].ID
+		}
+
+		id, _ := strconv.Atoi(idTercero)
+		// Formatea los datos en un mapa para la solicitud de actualización
+		updateInfo := map[string]interface{}{
+			"TerceroId":            map[string]interface{}{"Id": id},
+			"InfoComplementariaId": map[string]interface{}{"Id": element.ID},
+			"Dato":                 fmt.Sprintf("{\"Dato\": \"%s\"}", datosSlice[i]),
+			"Activo":               true,
+		}
+
+		// fmt.Println("INFOOOOOOOOOOOOOOOOOOOOOOO", updateInfo)
+		// Realiza la solicitud de actualización a la API
+		apiResp := helpers.SendRequestToCRUDAPI("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero/"+strconv.Itoa(idPut), updateInfo, "PUT")
+		if apiResp.Err != nil {
+			logs.Error("Error al enviar la solicitud a la API CRUD", apiResp.Err)
+		}
+	}
+
+	return nil, nil
+}
+
+func ConsultarLocalidades() (interface{}, error) {
+
+	type Localidad struct {
+		Id     int    `json:"Id"`
+		Nombre string `json:"Nombre"`
+	}
+
+	type TipoColegio struct {
+		Id     int    `json:"Id"`
+		Nombre string `json:"Nombre"`
+	}
+
+	type ValidoBachillerato struct {
+		Id     int    `json:"Id"`
+		Nombre string `json:"Nombre"`
+	}
+
+	type SemestresTranscurridos struct {
+		Id     int    `json:"Id"`
+		Nombre string `json:"Nombre"`
+	}
+
+	type Medio struct {
+		Id     int    `json:"Id"`
+		Nombre string `json:"Nombre"`
+	}
+
+	type Presentaciones struct {
+		Id     int    `json:"Id"`
+		Nombre string `json:"Nombre"`
+	}
+
+	type Respuestas struct {
+		Localidades  []Localidad              `json:"localidades"`
+		TipoColegio  []TipoColegio            `json:"tipoColegio"`
+		Valido       []ValidoBachillerato     `json:"valido"`
+		Semestres    []SemestresTranscurridos `json:"semestres"`
+		Medio        []Medio                  `json:"medio"`
+		Presentacion []Presentaciones         `json:"presentacion"`
+	}
+
+	var localidades []Localidad
+	errLoclidades := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria?limit=0&query=GrupoInfoComplementariaId.CodigoAbreviacion:LOCALIDADES&query=Activo:true", &localidades)
+	if errLoclidades == nil {
+		var tipoColegio []TipoColegio
+		errColegio := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria?limit=0&query=GrupoInfoComplementariaId.CodigoAbreviacion:TIPO_COLEGIO&query=Activo:true", &tipoColegio)
+		if errColegio == nil {
+			var validoBachillerato []ValidoBachillerato
+			errValido := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria?limit=0&query=GrupoInfoComplementariaId.CodigoAbreviacion:VALIDO&query=Activo:true", &validoBachillerato)
+			if errValido == nil {
+				var semestresTranscurridos []SemestresTranscurridos
+				errSemestres := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria?limit=0&query=GrupoInfoComplementariaId.CodigoAbreviacion:S_TRANSCURRIDOS&query=Activo:true", &semestresTranscurridos)
+				if errSemestres == nil {
+					var medio []Medio
+					errMedio := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria?limit=0&query=GrupoInfoComplementariaId.CodigoAbreviacion:MEDIO&query=Activo:true", &medio)
+					if errMedio == nil {
+						var presentaciones []Presentaciones
+						errPresentaciones := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria?limit=0&query=GrupoInfoComplementariaId.CodigoAbreviacion:PRESENTACIONES_U&query=Activo:true", &presentaciones)
+						if errPresentaciones == nil {
+							respuesta := Respuestas{
+								Localidades:  localidades,
+								TipoColegio:  tipoColegio,
+								Valido:       validoBachillerato,
+								Semestres:    semestresTranscurridos,
+								Medio:        medio,
+								Presentacion: presentaciones,
+							}
+							fmt.Println("GRUPO INFO", respuesta)
+							return respuesta, nil
+						} else {
+							logs.Error("Error --> ", errPresentaciones)
+							return nil, errors.New("error del servicio al consultar los datos de Presentaciones")
+						}
+					} else {
+						logs.Error("Error --> ", errMedio)
+						return nil, errors.New("error del servicio al consultar los datos de Medio")
+					}
+				} else {
+					logs.Error("Error --> ", errSemestres)
+					return nil, errors.New("error del servicio al consultar los datos de Semestres Transcurridos")
+				}
+			} else {
+				logs.Error("Error --> ", errValido)
+				return nil, errors.New("error del servicio al consultar los datos de Valido Bachillerato")
+			}
+		} else {
+			logs.Error("Error --> ", errColegio)
+			return nil, errors.New("error del servicio al consultar los colegios")
+		}
+	} else {
+		logs.Error("Error --> ", errLoclidades)
+		return nil, errors.New("error del servicio al consultar las Localidades")
+	}
+}
+
+func ConsultarInfoAcademicaAspirante(idTercero string) (interface{}, error) {
+	type Aspirante struct {
+		Id int `json:"Id"`
+	}
+
+	type Localidad struct {
+		Id                   int `json:"Id"`
+		InfoComplementariaId struct {
+			Id     int    `json:"Id"`
+			Nombre string `json:"Nombre"`
+		} `json:"InfoComplementariaId"`
+	}
+
+	type Colegio struct {
+		Id                   int `json:"Id"`
+		InfoComplementariaId struct {
+			Id     int    `json:"Id"`
+			Nombre string `json:"Nombre"`
+		} `json:"InfoComplementariaId"`
+	}
+
+	type Valido struct {
+		Id                   int `json:"Id"`
+		InfoComplementariaId struct {
+			Id     int    `json:"Id"`
+			Nombre string `json:"Nombre"`
+		} `json:"InfoComplementariaId"`
+	}
+
+	type Semestres struct {
+		Id                   int `json:"Id"`
+		InfoComplementariaId struct {
+			Id     int    `json:"Id"`
+			Nombre string `json:"Nombre"`
+		} `json:"InfoComplementariaId"`
+	}
+
+	type Medio struct {
+		Id                   int `json:"Id"`
+		InfoComplementariaId struct {
+			Id     int    `json:"Id"`
+			Nombre string `json:"Nombre"`
+		} `json:"InfoComplementariaId"`
+	}
+
+	type Presentaciones struct {
+		Id                   int `json:"Id"`
+		InfoComplementariaId struct {
+			Id     int    `json:"Id"`
+			Nombre string `json:"Nombre"`
+		} `json:"InfoComplementariaId"`
+	}
+
+	type Respuestas struct {
+		Localidades  []Localidad      `json:"localidades"`
+		TipoColegio  []Colegio        `json:"colegio"`
+		Valido       []Valido         `json:"valido"`
+		Semestres    []Semestres      `json:"semestres"`
+		Medio        []Medio          `json:"medio"`
+		Presentacion []Presentaciones `json:"presentacion"`
+	}
+
+	var aspirante []Aspirante
+	errAspirante := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"tercero?query=Id:"+idTercero, &aspirante)
+	if errAspirante == nil {
+
+		var localidad []Localidad
+		errLocalidad := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+idTercero+",InfoComplementariaId.GrupoInfoComplementariaId.CodigoAbreviacion:LOCALIDADES", &localidad)
+		if errLocalidad == nil {
+			fmt.Println("ASPIRANTE RESPUESTA", localidad)
+		} else {
+			logs.Error("Error --> ", errLocalidad)
+			return nil, errors.New("error del servicio ConsultarInfoAcademicaAspirante:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
+		}
+
+		var colegio []Colegio
+		errColegio := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+idTercero+",InfoComplementariaId.GrupoInfoComplementariaId.CodigoAbreviacion:TIPO_COLEGIO", &colegio)
+		if errColegio == nil {
+			fmt.Println("ASPIRANTE RESPUESTA", colegio)
+		} else {
+			logs.Error("Error --> ", errColegio)
+			return nil, errors.New("error del servicio ConsultarInfoAcademicaAspirante:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
+		}
+
+		var valido []Valido
+		errValido := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+idTercero+",InfoComplementariaId.GrupoInfoComplementariaId.CodigoAbreviacion:VALIDO", &valido)
+		if errValido == nil {
+			fmt.Println("ASPIRANTE RESPUESTA", valido)
+		} else {
+			logs.Error("Error --> ", errValido)
+			return nil, errors.New("error del servicio ConsultarInfoAcademicaAspirante:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
+		}
+
+		var semestres []Semestres
+		errSemestres := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+idTercero+",InfoComplementariaId.GrupoInfoComplementariaId.CodigoAbreviacion:S_TRANSCURRIDOS", &semestres)
+		if errSemestres == nil {
+			fmt.Println("ASPIRANTE RESPUESTA", semestres)
+		} else {
+			logs.Error("Error --> ", errSemestres)
+			return nil, errors.New("error del servicio ConsultarInfoAcademicaAspirante:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
+		}
+
+		var medio []Medio
+		errMedio := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+idTercero+",InfoComplementariaId.GrupoInfoComplementariaId.CodigoAbreviacion:MEDIO", &medio)
+		if errMedio == nil {
+			fmt.Println("ASPIRANTE RESPUESTA", medio)
+		} else {
+			logs.Error("Error --> ", errMedio)
+			return nil, errors.New("error del servicio ConsultarInfoAcademicaAspirante:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
+		}
+
+		var presentaciones []Presentaciones
+		errPresentaciones := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+idTercero+",InfoComplementariaId.GrupoInfoComplementariaId.CodigoAbreviacion:PRESENTACIONES_U", &presentaciones)
+		if errPresentaciones == nil {
+			fmt.Println("ASPIRANTE RESPUESTA", presentaciones)
+		} else {
+			logs.Error("Error --> ", errPresentaciones)
+			return nil, errors.New("error del servicio ConsultarInfoAcademicaAspirante:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
+		}
+
+		respuesta := Respuestas{
+			Localidades:  localidad,
+			TipoColegio:  colegio,
+			Valido:       valido,
+			Semestres:    semestres,
+			Medio:        medio,
+			Presentacion: presentaciones,
+		}
+
+		return respuesta, nil
+	} else {
+		logs.Error("Error --> ", errAspirante)
+		return nil, errors.New("error del servicio ConsultarInfoAcademicaAspirante:   La solicitud contiene un tipo de dato incorrecto o un parámetro inválido")
+	}
+}
+
+func CrearLocalidades(idTercero string, data []byte) (interface{}, error) {
+
+	type Data struct {
+		Localidad   int `json:"localidad"`
+		TipoColegio int `json:"tipoColegio"`
+		Valido      int `json:"valido"`
+		Semestre    int `json:"semestre"`
+		Medio       int `json:"medio"`
+		Oportunidad int `json:"oportunidad"`
+	}
+
+	var datos Data
+	if err := json.Unmarshal(data, &datos); err == nil {
+		id, _ := strconv.Atoi(idTercero)
+		datosSlice := []int{
+			datos.Localidad,
+			datos.TipoColegio,
+			datos.Valido,
+			datos.Semestre,
+			datos.Medio,
+			datos.Oportunidad,
+		}
+		for _, element := range datosSlice {
+			updateInfo := map[string]interface{}{
+				"TerceroId":            map[string]interface{}{"Id": id},
+				"InfoComplementariaId": map[string]interface{}{"Id": element},
+				"Activo":               true,
+			}
+			apiResp := helpers.SendRequestToCRUDAPI("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero/", updateInfo, "POST")
+			if apiResp.Err != nil {
+				logs.Error("Error --> ", apiResp.Err)
+				return nil, errors.New("error del servicio al crear las localidades")
+			}
+		}
+		return nil, nil
+	} else {
+		logs.Error("Error --> ", err)
+		return nil, errors.New("error del servicio al crear las localidades")
+	}
+}
+
+func ActualizarInfoAcademicaAspirante(idTercero string, data []byte) (interface{}, error) {
+	type Data struct {
+		Localidad   int `json:"localidad"`
+		TipoColegio int `json:"tipoColegio"`
+		Valido      int `json:"valido"`
+		Semestre    int `json:"semestre"`
+		Medio       int `json:"medio"`
+		Oportunidad int `json:"oportunidad"`
+	}
+
+	type Localidad struct {
+		Id int `json:"Id"`
+	}
+
+	type Colegio struct {
+		Id int `json:"Id"`
+	}
+
+	type Valido struct {
+		Id int `json:"Id"`
+	}
+
+	type Semestres struct {
+		Id int `json:"Id"`
+	}
+
+	type Medio struct {
+		Id int `json:"Id"`
+	}
+
+	type Presentaciones struct {
+		Id int `json:"Id"`
+	}
+
+	var datos Data
+	if err := json.Unmarshal(data, &datos); err == nil {
+
+		var localidad []Localidad
+		errLocalidad := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+idTercero+",InfoComplementariaId.GrupoInfoComplementariaId.CodigoAbreviacion:LOCALIDADES", &localidad)
+		if errLocalidad == nil {
+		} else {
+			logs.Error("Error --> ", errLocalidad)
+			return nil, errors.New("error del servicio ConsultarInfoAcademicaAspirante")
+		}
+
+		var colegio []Colegio
+		errColegio := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+idTercero+",InfoComplementariaId.GrupoInfoComplementariaId.CodigoAbreviacion:TIPO_COLEGIO", &colegio)
+		if errColegio == nil {
+		} else {
+			logs.Error("Error --> ", errColegio)
+			return nil, errors.New("error del servicio ConsultarInfoAcademicaAspirante")
+		}
+
+		var valido []Valido
+		errValido := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+idTercero+",InfoComplementariaId.GrupoInfoComplementariaId.CodigoAbreviacion:VALIDO", &valido)
+		if errValido == nil {
+		} else {
+			logs.Error("Error --> ", errValido)
+			return nil, errors.New("error del servicio ConsultarInfoAcademicaAspirante")
+		}
+
+		var semestres []Semestres
+		errSemestres := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+idTercero+",InfoComplementariaId.GrupoInfoComplementariaId.CodigoAbreviacion:S_TRANSCURRIDOS", &semestres)
+		if errSemestres == nil {
+		} else {
+			logs.Error("Error --> ", errSemestres)
+			return nil, errors.New("error del servicio ConsultarInfoAcademicaAspirante")
+		}
+
+		var medio []Medio
+		errMedio := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+idTercero+",InfoComplementariaId.GrupoInfoComplementariaId.CodigoAbreviacion:MEDIO", &medio)
+		if errMedio == nil {
+		} else {
+			logs.Error("Error --> ", errMedio)
+			return nil, errors.New("error del servicio ConsultarInfoAcademicaAspirante")
+		}
+
+		var presentaciones []Presentaciones
+		errPresentaciones := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero?query=TerceroId.Id:"+idTercero+",InfoComplementariaId.GrupoInfoComplementariaId.CodigoAbreviacion:PRESENTACIONES_U", &presentaciones)
+		if errPresentaciones == nil {
+		} else {
+			logs.Error("Error --> ", errPresentaciones)
+			return nil, errors.New("error del servicio ConsultarInfoAcademicaAspirante")
+		}
+
+		//Datos de la peticion del cliente
+		datosActualizarSlice := []int{
+			datos.Localidad,
+			datos.TipoColegio,
+			datos.Valido,
+			datos.Semestre,
+			datos.Medio,
+			datos.Oportunidad,
+		}
+		fmt.Println("DATOS SLICE", datosActualizarSlice)
+
+		// Ids de la info complementaria que vamos a actualizar
+		idSlice := []int{
+			localidad[0].Id,
+			colegio[0].Id,
+			valido[0].Id,
+			semestres[0].Id,
+			medio[0].Id,
+			presentaciones[0].Id,
+		}
+
+		fmt.Println("ID SLICE", idSlice)
+
+		for i := range datosActualizarSlice {
+			id, _ := strconv.Atoi(idTercero)
+			// Formatea los datos en un mapa para la solicitud de actualización
+			updateInfo := map[string]interface{}{
+				"TerceroId":            map[string]interface{}{"Id": id},
+				"InfoComplementariaId": map[string]interface{}{"Id": datosActualizarSlice[i]},
+				"Activo":               true,
+			}
+
+			// Realiza la solicitud de actualización a la API
+			apiResp := helpers.SendRequestToCRUDAPI("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero/"+strconv.Itoa(idSlice[i]), updateInfo, "PUT")
+			if apiResp.Err != nil {
+				logs.Error("Error al enviar la solicitud a la API CRUD", apiResp.Err)
+			}
+			fmt.Println("INFO", updateInfo)
+		}
+		return nil, nil
+	} else {
+		logs.Error("Error --> ", err)
+		return nil, errors.New("error del servicio al actualizar las localidades")
+	}
+}

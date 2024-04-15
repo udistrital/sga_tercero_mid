@@ -243,6 +243,58 @@ paths:
           description: '{int}'
         "400":
           description: the request contains incorrect syntax
+  /personas/datos-acudiente/{tercero_id}:
+    get:
+      tags:
+      - personas
+      description: ConsultarDatosAcudiente
+      operationId: TerceroController.ConsultarDatosAcudiente
+      parameters:
+      - in: path
+        name: tercero_id
+        description: Id del tercero
+        required: true
+        type: integer
+        format: int64
+      responses:
+        "200":
+          description: '{}'
+        "404":
+          description: not found resource
+    put:
+      tags:
+      - personas
+      description: ActualizarDatosAcudiente
+      operationId: TerceroController.ActualizarDatosAcudiente
+      parameters:
+      - in: path
+        name: tercero_id
+        description: Id del tercero
+        required: true
+        type: integer
+        format: int64
+      responses:
+        "200":
+          description: '{}'
+        "404":
+          description: not found resource
+    post:
+      tags:
+      - personas
+      description: GuardarDatosAcudiente
+      operationId: TerceroController.GuardarDatosAcudiente
+      parameters:
+      - in: path
+        name: tercero_id
+        description: Id del tercero
+        required: true
+        type: integer
+        format: int64
+      responses:
+        "200":
+          description: '{}'
+        "404":
+          description: not found resource
   /personas/existencia/{numeroDocumento}:
     get:
       tags:
@@ -271,6 +323,69 @@ paths:
       - in: body
         name: body
         description: body for Actualizar la info familiar del tercero content
+        required: true
+        schema:
+          $ref: '#/definitions/{}'
+      responses:
+        "200":
+          description: '{}'
+        "403":
+          description: body is empty
+  /personas/localidades:
+    get:
+      tags:
+      - personas
+      description: get ConsultarLocalidades
+      operationId: TerceroController.ConsultarLocalidades
+      responses:
+        "200":
+          description: '{}'
+        "404":
+          description: not found resource
+  /personas/localidades/{tercero_id}:
+    get:
+      tags:
+      - personas
+      description: ConsultarInfoAcademicaAspirante
+      operationId: TerceroController.ConsultarInfoAcademicaAspirante
+      parameters:
+      - in: path
+        name: tercero_id
+        description: Id del tercero
+        required: true
+        type: integer
+        format: int64
+      responses:
+        "200":
+          description: '{}'
+        "404":
+          description: not found resource
+    put:
+      tags:
+      - personas
+      description: ActualizarInfoAcademicaAspirante
+      operationId: TerceroController.ActualizarInfoAcademicaAspirante
+      parameters:
+      - in: body
+        name: body
+        description: body for Actualizar la info academica del aspirante content
+        required: true
+        schema:
+          $ref: '#/definitions/{}'
+      responses:
+        "200":
+          description: '{}'
+        "403":
+          description: body is empty
+    post:
+      tags:
+      - personas
+      description: CrearLocalidades
+      operationId: TerceroController.CrearLocalidades
+      parameters:
+      - in: body
+        name: body
+        description: body for CrearLocalidades content
         required: true
         schema:
           $ref: '#/definitions/{}'

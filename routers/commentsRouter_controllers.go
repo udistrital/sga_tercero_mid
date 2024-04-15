@@ -126,6 +126,33 @@ func init() {
 
     beego.GlobalControllerRouter["github.com/udistrital/sga_tercero_mid/controllers:TerceroController"] = append(beego.GlobalControllerRouter["github.com/udistrital/sga_tercero_mid/controllers:TerceroController"],
         beego.ControllerComments{
+            Method: "ConsultarDatosAcudiente",
+            Router: "/datos-acudiente/:tercero_id",
+            AllowHTTPMethods: []string{"get"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["github.com/udistrital/sga_tercero_mid/controllers:TerceroController"] = append(beego.GlobalControllerRouter["github.com/udistrital/sga_tercero_mid/controllers:TerceroController"],
+        beego.ControllerComments{
+            Method: "ActualizarDatosAcudiente",
+            Router: "/datos-acudiente/:tercero_id",
+            AllowHTTPMethods: []string{"put"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["github.com/udistrital/sga_tercero_mid/controllers:TerceroController"] = append(beego.GlobalControllerRouter["github.com/udistrital/sga_tercero_mid/controllers:TerceroController"],
+        beego.ControllerComments{
+            Method: "GuardarDatosAcudiente",
+            Router: "/datos-acudiente/:tercero_id",
+            AllowHTTPMethods: []string{"post"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["github.com/udistrital/sga_tercero_mid/controllers:TerceroController"] = append(beego.GlobalControllerRouter["github.com/udistrital/sga_tercero_mid/controllers:TerceroController"],
+        beego.ControllerComments{
             Method: "ConsultarExistenciaPersona",
             Router: "/existencia/:numeroDocumento",
             AllowHTTPMethods: []string{"get"},
@@ -137,6 +164,42 @@ func init() {
         beego.ControllerComments{
             Method: "ActualizarInfoFamiliar",
             Router: "/info-familiar",
+            AllowHTTPMethods: []string{"put"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["github.com/udistrital/sga_tercero_mid/controllers:TerceroController"] = append(beego.GlobalControllerRouter["github.com/udistrital/sga_tercero_mid/controllers:TerceroController"],
+        beego.ControllerComments{
+            Method: "ConsultarLocalidades",
+            Router: "/localidades",
+            AllowHTTPMethods: []string{"get"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["github.com/udistrital/sga_tercero_mid/controllers:TerceroController"] = append(beego.GlobalControllerRouter["github.com/udistrital/sga_tercero_mid/controllers:TerceroController"],
+        beego.ControllerComments{
+            Method: "ConsultarInfoAcademicaAspirante",
+            Router: "/localidades/:tercero_id",
+            AllowHTTPMethods: []string{"get"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["github.com/udistrital/sga_tercero_mid/controllers:TerceroController"] = append(beego.GlobalControllerRouter["github.com/udistrital/sga_tercero_mid/controllers:TerceroController"],
+        beego.ControllerComments{
+            Method: "CrearLocalidades",
+            Router: "/localidades/:tercero_id",
+            AllowHTTPMethods: []string{"post"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["github.com/udistrital/sga_tercero_mid/controllers:TerceroController"] = append(beego.GlobalControllerRouter["github.com/udistrital/sga_tercero_mid/controllers:TerceroController"],
+        beego.ControllerComments{
+            Method: "ActualizarInfoAcademicaAspirante",
+            Router: "/localidades/:tercero_id",
             AllowHTTPMethods: []string{"put"},
             MethodParams: param.Make(),
             Filters: nil,
