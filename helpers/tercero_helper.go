@@ -14,13 +14,13 @@ func UpdateOrCreateInfoComplementaria(tipoInfo string, infoComp map[string]inter
 	if infoComp[tipoInfo].(map[string]interface{})["hasId"] != nil {
 		idInfComp := infoComp[tipoInfo].(map[string]interface{})["hasId"].(float64)
 		var updateInfoComp map[string]interface{}
-		errUpdtInfoComp := request.GetJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero/"+fmt.Sprintf("%v", idInfComp), &updateInfoComp)
+		errUpdtInfoComp := request.GetJson(beego.AppConfig.String("TercerosService")+"info_complementaria_tercero/"+fmt.Sprintf("%v", idInfComp), &updateInfoComp)
 		if errUpdtInfoComp == nil && updateInfoComp["Status"] != 404 {
 			dataToUpdate := infoComp[tipoInfo].(map[string]interface{})["data"].(map[string]interface{})
 			updateInfoComp["InfoComplementariaId"] = dataToUpdate
 
 			var updateAnswer map[string]interface{}
-			errupdateAnswer := request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero/"+fmt.Sprintf("%.f", idInfComp), "PUT", &updateAnswer, updateInfoComp)
+			errupdateAnswer := request.SendJson(beego.AppConfig.String("TercerosService")+"info_complementaria_tercero/"+fmt.Sprintf("%.f", idInfComp), "PUT", &updateAnswer, updateInfoComp)
 			if errupdateAnswer == nil {
 				resp = updateAnswer
 				ok = true
@@ -33,7 +33,7 @@ func UpdateOrCreateInfoComplementaria(tipoInfo string, infoComp map[string]inter
 			"Activo":               true,
 		}
 		var createinfo map[string]interface{}
-		errCreateInfo := request.SendJson("http://"+beego.AppConfig.String("TercerosService")+"info_complementaria_tercero", "POST", &createinfo, newInfo)
+		errCreateInfo := request.SendJson(beego.AppConfig.String("TercerosService")+"info_complementaria_tercero", "POST", &createinfo, newInfo)
 		if errCreateInfo == nil && fmt.Sprintf("%v", createinfo) != "map[]" && createinfo["Id"] != nil {
 			resp = createinfo
 			ok = true
